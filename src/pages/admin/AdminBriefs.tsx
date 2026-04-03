@@ -1,28 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
-import { AdminTable, type Column } from "@/components/admin/AdminTable";
-
-interface BriefRow {
-  id: string;
-  business_name: string;
-  status: string;
-  submitted_at: string | null;
-  created_at: string;
-  clients: { company_name: string } | null;
-}
-
-const statusLabels: Record<string, string> = {
-  draft: "Concept",
-  submitted: "Ingediend",
-  reviewed: "Beoordeeld",
-};
-
-const statusStyles: Record<string, string> = {
-  draft: "bg-accent-soft text-text-muted",
-  submitted: "bg-blue-bg text-blue",
-  reviewed: "bg-green-bg text-green",
-};
+import { DataTable } from "@/components/admin/DataTable";
+import { briefColumns, type BriefRow } from "@/components/admin/columns/briefs-columns";
 
 export function AdminBriefs() {
   const navigate = useNavigate();
@@ -40,43 +20,15 @@ export function AdminBriefs() {
       });
   }, []);
 
-  const columns: Column<BriefRow>[] = [
-    { key: "business_name", label: "Bedrijf" },
-    {
-      key: "clients",
-      label: "Organisatie",
-      render: (row) => row.clients?.company_name ?? "—",
-    },
-    {
-      key: "status",
-      label: "Status",
-      render: (row) => (
-        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusStyles[row.status] ?? ""}`}>
-          {statusLabels[row.status] ?? row.status}
-        </span>
-      ),
-    },
-    {
-      key: "submitted_at",
-      label: "Ingediend",
-      render: (row) => row.submitted_at ? new Date(row.submitted_at).toLocaleDateString("nl-NL") : "—",
-    },
-    {
-      key: "created_at",
-      label: "Aangemaakt",
-      render: (row) => new Date(row.created_at).toLocaleDateString("nl-NL"),
-    },
-  ];
-
   return (
     <div>
       <h1 className="text-2xl font-bold text-text mb-6">Intakes</h1>
-      <AdminTable
-        columns={columns}
+      <DataTable
+        columns={briefColumns}
         data={briefs}
         loading={loading}
         searchPlaceholder="Zoek intake..."
-        searchFields={["business_name"]}
+        searchColumn="business_name"
         onRowClick={(row) => navigate(`/admin/briefs/${row.id}`)}
         emptyMessage="Geen intakes gevonden."
       />

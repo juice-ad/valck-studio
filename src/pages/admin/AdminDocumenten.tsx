@@ -1,19 +1,23 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Plus, Download, FileText } from "lucide-react";
+import { Plus } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { AdminTable, type Column } from "@/components/admin/AdminTable";
-import { AdminModal } from "@/components/admin/AdminModal";
-
-interface DocRow {
-  id: string;
-  name: string;
-  file_url: string;
-  client_id: string;
-  project_id: string | null;
-  created_at: string;
-  clients: { company_name: string } | null;
-  projects: { title: string } | null;
-}
+import { DataTable } from "@/components/admin/DataTable";
+import { documentColumns, type DocRow } from "@/components/admin/columns/documenten-columns";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ClientOption { id: string; company_name: string; }
 interface ProjectOption { id: string; title: string; client_id: string; }
@@ -65,90 +69,85 @@ export function AdminDocumenten() {
     loadDocs();
   }
 
-  const columns: Column<DocRow>[] = [
-    {
-      key: "name",
-      label: "Naam",
-      render: (row) => (
-        <span className="inline-flex items-center gap-2">
-          <FileText size={14} className="text-text-muted" />
-          {row.name}
-        </span>
-      ),
-    },
-    { key: "clients", label: "Organisatie", render: (row) => row.clients?.company_name ?? "—" },
-    { key: "projects", label: "Project", render: (row) => row.projects?.title ?? "—" },
-    {
-      key: "created_at",
-      label: "Geüpload",
-      render: (row) => new Date(row.created_at).toLocaleDateString("nl-NL"),
-    },
-    {
-      key: "file_url",
-      label: "",
-      sortable: false,
-      render: (row) => (
-        <a href={row.file_url} target="_blank" rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-xs text-text-secondary hover:text-text no-underline">
-          <Download size={14} /> Download
-        </a>
-      ),
-    },
-  ];
-
   return (
     <div>
       <h1 className="text-2xl font-bold text-text mb-6">Documenten</h1>
-      <AdminTable
-        columns={columns}
+
+      <DataTable
+        columns={documentColumns}
         data={docs}
         loading={loading}
         searchPlaceholder="Zoek document..."
-        searchFields={["name"]}
+        searchColumn="name"
         emptyMessage="Geen documenten gevonden."
         actions={
-          <button onClick={() => setShowCreate(true)}
-            className="inline-flex items-center gap-2 bg-text text-white rounded-[8px] px-4 py-2 text-sm font-semibold hover:bg-[#333] transition-colors">
+          <Button onClick={() => setShowCreate(true)}>
             <Plus size={16} /> Upload document
-          </button>
+          </Button>
         }
       />
 
-      <AdminModal open={showCreate} onClose={() => setShowCreate(false)} title="Nieuw document">
-        <form onSubmit={handleCreate} className="flex flex-col gap-4">
-          <div>
-            <label className="block text-sm font-medium text-text mb-1.5">Naam *</label>
-            <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="w-full rounded-[8px] border border-border-light bg-bg px-3 py-2.5 text-sm text-text outline-none focus:border-text transition-colors" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-text mb-1.5">Organisatie *</label>
-            <select required value={form.client_id} onChange={(e) => setForm({ ...form, client_id: e.target.value, project_id: "" })}
-              className="w-full rounded-[8px] border border-border-light bg-bg px-3 py-2.5 text-sm text-text outline-none focus:border-text transition-colors">
-              <option value="">Kies organisatie...</option>
-              {clients.map((c) => <option key={c.id} value={c.id}>{c.company_name}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-text mb-1.5">Project</label>
-            <select value={form.project_id} onChange={(e) => setForm({ ...form, project_id: e.target.value })}
-              className="w-full rounded-[8px] border border-border-light bg-bg px-3 py-2.5 text-sm text-text outline-none focus:border-text transition-colors">
-              <option value="">Geen project</option>
-              {filteredProjects.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-text mb-1.5">Bestand URL *</label>
-            <input required value={form.file_url} onChange={(e) => setForm({ ...form, file_url: e.target.value })}
-              placeholder="https://..."
-              className="w-full rounded-[8px] border border-border-light bg-bg px-3 py-2.5 text-sm text-text outline-none focus:border-text transition-colors" />
-          </div>
-          <button type="submit" disabled={saving}
-            className="bg-text text-white rounded-[8px] py-2.5 text-sm font-semibold hover:bg-[#333] transition-colors disabled:opacity-50">
-            {saving ? "Opslaan..." : "Toevoegen"}
-          </button>
-        </form>
-      </AdminModal>
+      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Nieuw document</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleCreate} className="flex flex-col gap-4">
+            <div>
+              <label className="block text-sm font-medium text-text mb-1.5">Naam *</label>
+              <Input
+                required
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-text mb-1.5">Organisatie *</label>
+              <Select
+                value={form.client_id}
+                onValueChange={(val) => setForm({ ...form, client_id: val, project_id: "" })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Kies organisatie..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {clients.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.company_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-text mb-1.5">Project</label>
+              <Select
+                value={form.project_id}
+                onValueChange={(val) => setForm({ ...form, project_id: val })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Geen project" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredProjects.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-text mb-1.5">Bestand URL *</label>
+              <Input
+                required
+                value={form.file_url}
+                onChange={(e) => setForm({ ...form, file_url: e.target.value })}
+                placeholder="https://..."
+              />
+            </div>
+            <Button type="submit" disabled={saving}>
+              {saving ? "Opslaan..." : "Toevoegen"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

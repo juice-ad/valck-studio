@@ -1,18 +1,21 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { AdminTable, type Column } from "@/components/admin/AdminTable";
-import { AdminModal } from "@/components/admin/AdminModal";
-
-interface UserRow {
-  id: string;
-  full_name: string;
-  email: string;
-  role: string;
-  is_admin: boolean;
-  linked_client_id: string | null;
-  created_at: string;
-  clients: { company_name: string } | null;
-}
+import { DataTable } from "@/components/admin/DataTable";
+import { userColumns, type UserRow } from "@/components/admin/columns/users-columns";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export function AdminUsers() {
   const [users, setUsers] = useState<UserRow[]>([]);
@@ -45,82 +48,57 @@ export function AdminUsers() {
     setSaving(false);
   }
 
-  const columns: Column<UserRow>[] = [
-    { key: "full_name", label: "Naam", render: (row) => row.full_name || "—" },
-    { key: "email", label: "E-mail" },
-    {
-      key: "role",
-      label: "Role",
-      render: (row) => (
-        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-          row.role === "admin" ? "bg-accent-soft text-text" : "bg-blue-bg text-blue"
-        }`}>
-          {row.role}
-        </span>
-      ),
-    },
-    {
-      key: "linked_client_id",
-      label: "Organisatie",
-      render: (row) => row.clients?.company_name ?? "—",
-    },
-    {
-      key: "created_at",
-      label: "Aangemaakt",
-      render: (row) => new Date(row.created_at).toLocaleDateString("nl-NL"),
-    },
-  ];
-
   return (
     <div>
       <h1 className="text-2xl font-bold text-text mb-6">Gebruikers</h1>
 
-      <AdminTable
-        columns={columns}
+      <DataTable
+        columns={userColumns}
         data={users}
         loading={loading}
         searchPlaceholder="Zoek gebruiker..."
-        searchFields={["full_name", "email"]}
+        searchColumn="full_name"
         onRowClick={(row) => { setSelected(row); setEditRole(row.role); }}
         emptyMessage="Geen gebruikers gevonden."
       />
 
-      <AdminModal
-        open={!!selected}
-        onClose={() => setSelected(null)}
-        title={selected?.full_name || "Gebruiker"}
-      >
-        {selected && (
-          <div className="flex flex-col gap-4">
-            <div>
-              <p className="text-xs text-text-muted">E-mail</p>
-              <p className="text-sm text-text">{selected.email}</p>
-            </div>
-            <div>
-              <p className="text-xs text-text-muted">Organisatie</p>
-              <p className="text-sm text-text">{selected.clients?.company_name ?? "Geen"}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-text mb-1.5">Role</label>
-              <select
-                value={editRole}
-                onChange={(e) => setEditRole(e.target.value)}
-                className="w-full rounded-[8px] border border-border-light bg-bg px-3 py-2.5 text-sm text-text outline-none focus:border-text transition-colors"
+      <Dialog open={!!selected} onOpenChange={(open) => { if (!open) setSelected(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{selected?.full_name || "Gebruiker"}</DialogTitle>
+          </DialogHeader>
+          {selected && (
+            <div className="flex flex-col gap-4">
+              <div>
+                <p className="text-xs text-text-muted">E-mail</p>
+                <p className="text-sm text-text">{selected.email}</p>
+              </div>
+              <div>
+                <p className="text-xs text-text-muted">Organisatie</p>
+                <p className="text-sm text-text">{selected.clients?.company_name ?? "Geen"}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-text mb-1.5">Rol</label>
+                <Select value={editRole} onValueChange={setEditRole}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="client">client</SelectItem>
+                    <SelectItem value="admin">admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                onClick={handleSaveRole}
+                disabled={saving || editRole === selected.role}
               >
-                <option value="client">client</option>
-                <option value="admin">admin</option>
-              </select>
+                {saving ? "Opslaan..." : "Opslaan"}
+              </Button>
             </div>
-            <button
-              onClick={handleSaveRole}
-              disabled={saving || editRole === selected.role}
-              className="bg-text text-white rounded-[8px] py-2.5 text-sm font-semibold hover:bg-[#333] transition-colors disabled:opacity-50"
-            >
-              {saving ? "Opslaan..." : "Opslaan"}
-            </button>
-          </div>
-        )}
-      </AdminModal>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

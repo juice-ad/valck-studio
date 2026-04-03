@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { CreditCard, CheckCircle } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { useActiveClient } from "@/contexts/ClientContext";
 import type { Invoice, InvoiceStatus } from "@/types/portal";
+import { Button } from "@/components/ui/button";
 
 const statusStyles: Record<InvoiceStatus, string> = {
   concept: "bg-accent-soft text-text-muted",
@@ -28,6 +32,7 @@ export function Facturen() {
   const { activeClientId } = useActiveClient();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
     if (!activeClientId) return;
@@ -42,6 +47,14 @@ export function Facturen() {
         setLoading(false);
       });
   }, [activeClientId]);
+
+  // Show success toast after payment redirect
+  useEffect(() => {
+    if (searchParams.get("payment") === "complete") {
+      toast.success("Bedankt voor je betaling! De status wordt automatisch bijgewerkt.");
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   if (loading) {
     return (
@@ -82,6 +95,8 @@ export function Facturen() {
                   <th className="px-6 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">
                     Status
                   </th>
+                  <th className="px-6 py-3 text-xs font-semibold text-text-muted uppercase tracking-wider">
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -110,6 +125,26 @@ export function Facturen() {
                       >
                         {statusLabels[inv.status]}
                       </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      {inv.status === "betaald" ? (
+                        <span className="inline-flex items-center gap-1 text-xs text-green">
+                          <CheckCircle size={14} /> Betaald
+                        </span>
+                      ) : inv.mollie_payment_link_url ? (
+                        <Button
+                          size="sm"
+                          asChild
+                        >
+                          <a
+                            href={inv.mollie_payment_link_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <CreditCard size={14} /> Betaal nu
+                          </a>
+                        </Button>
+                      ) : null}
                     </td>
                   </tr>
                 ))}

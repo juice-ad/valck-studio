@@ -2,12 +2,16 @@ import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminHeader } from "@/components/admin/AdminHeader";
+import { CommandPalette } from "@/components/admin/CommandPalette";
 
 export function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div className="min-h-screen flex bg-bg">
+      {/* Command palette (⌘K) */}
+      <CommandPalette />
+
       {/* Desktop sidebar */}
       <div className="hidden md:flex">
         <AdminSidebar />

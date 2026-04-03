@@ -94,6 +94,23 @@ export interface Invoice {
   status: InvoiceStatus;
   due_date: string | null;
   created_at: string;
+  // Payment fields (Mollie)
+  mollie_payment_id: string | null;
+  mollie_payment_link_id: string | null;
+  mollie_payment_link_url: string | null;
+  paid_at: string | null;
+  sent_at: string | null;
+  payment_method: string | null;
+  line_items: InvoiceLineItem[];
+  // Moneybird fields
+  moneybird_invoice_id: string | null;
+  moneybird_contact_id: string | null;
+}
+
+export interface InvoiceLineItem {
+  description: string;
+  quantity: number;
+  price_cents: number;
 }
 
 // --- Discovery Flow ---
