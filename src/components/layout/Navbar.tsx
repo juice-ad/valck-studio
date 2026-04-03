@@ -23,7 +23,7 @@ export function Navbar() {
   const displayName = profile?.full_name || user?.email || "";
   const initials = displayName
     .split(" ")
-    .map((w) => w[0])
+    .map((w: string) => w[0])
     .join("")
     .toUpperCase()
     .slice(0, 2);
@@ -100,6 +100,15 @@ export function Navbar() {
 
               {dropdownOpen && (
                 <div className="absolute right-0 top-11 bg-bg-white rounded-[12px] border border-border-light shadow-lg py-2 min-w-[160px]">
+                  {profile?.is_admin && (
+                    <Link
+                      to="/admin"
+                      onClick={() => setDropdownOpen(false)}
+                      className="block px-4 py-2 text-sm text-text hover:bg-accent-soft no-underline transition-colors"
+                    >
+                      Admin
+                    </Link>
+                  )}
                   <Link
                     to="/portal/dashboard"
                     onClick={() => setDropdownOpen(false)}

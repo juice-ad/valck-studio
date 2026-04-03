@@ -6,6 +6,7 @@
 - Nooit pushen zonder expliciete toestemming — altijd eerst vragen
 - Bij elke aanpassing security checken en risico's expliciet benoemen
 - Begin elke sessie met `git fetch` om te checken of er nieuwe commits zijn
+- Bij portal/dashboard-werk (admin, client, of nieuwe user-facing secties): controleer ALTIJD dat backend (RLS policies, Supabase queries, DB functies) en frontend (routing, guards, contexts, components) op elkaar zijn afgestemd. Check per feature: kan de juiste user de data opvragen? Blokkeert RLS de verkeerde users? Klopt de redirect-flow? Dit voorkomt losse eindjes aan één kant.
 
 ---
 

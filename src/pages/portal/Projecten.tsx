@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
-import { useAuth } from "@/contexts/AuthContext";
+import { useActiveClient } from "@/contexts/ClientContext";
 import type { Project, ProjectPhase } from "@/types/portal";
 
 const phaseStyles: Record<ProjectPhase, string> = {
@@ -19,23 +19,23 @@ const phaseLabels: Record<ProjectPhase, string> = {
 };
 
 export function Projecten() {
-  const { user } = useAuth();
+  const { activeClientId } = useActiveClient();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
+    if (!activeClientId) return;
 
     supabase
       .from("projects")
       .select("*")
-      .eq("client_id", user.id)
+      .eq("client_id", activeClientId)
       .order("created_at", { ascending: false })
       .then(({ data }) => {
         setProjects((data as Project[]) ?? []);
         setLoading(false);
       });
-  }, [user]);
+  }, [activeClientId]);
 
   if (loading) {
     return (

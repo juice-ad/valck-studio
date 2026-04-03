@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -9,11 +10,13 @@ import {
   LogOut,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useActiveClient } from "@/contexts/ClientContext";
+import { supabase } from "@/lib/supabase";
 
 const navItems = [
   { label: "Dashboard", to: "/portal/dashboard", icon: LayoutDashboard },
-  { label: "Nieuwe brief", to: "/portal/discovery", icon: Sparkles },
-  { label: "Projecten", to: "/portal/projecten", icon: FolderKanban },
+  { label: "Intake", to: "/portal/discovery", icon: Sparkles },
+  { label: "Projecten", to: "/portal/projecten", icon: FolderKanban, hasNotification: true },
   { label: "Berichten", to: "/portal/berichten", icon: MessageCircle },
   { label: "Documenten", to: "/portal/documenten", icon: FileText },
   { label: "Facturen", to: "/portal/facturen", icon: Receipt },
@@ -26,11 +29,30 @@ interface Props {
 export function PortalSidebar({ onClose }: Props) {
   const { pathname } = useLocation();
   const { profile, user, signOut } = useAuth();
+  const { activeClientId } = useActiveClient();
+  const [hasOpenReviews, setHasOpenReviews] = useState(false);
+
+  // Check for open review rounds
+  useEffect(() => {
+    if (!activeClientId) return;
+
+    async function checkReviews() {
+      const { count } = await supabase
+        .from("review_rounds")
+        .select("id, projects!inner(client_id)", { count: "exact", head: true })
+        .eq("projects.client_id", activeClientId!)
+        .in("status", ["pending", "active"]);
+
+      setHasOpenReviews((count ?? 0) > 0);
+    }
+
+    checkReviews();
+  }, [activeClientId]);
 
   const displayName = profile?.full_name || user?.email || "";
   const initials = displayName
     .split(" ")
-    .map((w) => w[0])
+    .map((w: string) => w[0])
     .join("")
     .toUpperCase()
     .slice(0, 2);
@@ -53,6 +75,7 @@ export function PortalSidebar({ onClose }: Props) {
       <nav className="flex-1 px-3 py-4 flex flex-col gap-1">
         {navItems.map((item) => {
           const active = pathname.startsWith(item.to);
+          const showDot = item.hasNotification && hasOpenReviews;
           return (
             <Link
               key={item.to}
@@ -66,6 +89,9 @@ export function PortalSidebar({ onClose }: Props) {
             >
               <item.icon size={18} />
               {item.label}
+              {showDot && (
+                <span className="w-2 h-2 rounded-full bg-blue ml-auto animate-pulse-dot" />
+              )}
             </Link>
           );
         })}

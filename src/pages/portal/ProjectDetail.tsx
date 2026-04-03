@@ -6,15 +6,21 @@ import {
   RefreshCw,
   Send,
   Loader2,
+  Eye,
+  CheckCircle2,
+  Clock,
 } from "lucide-react";
+import { motion } from "motion/react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
+import { useActiveClient } from "@/contexts/ClientContext";
 import type {
   Project,
   ProjectUpdate,
   ProjectPhase,
   VercelDeployment,
   PreviewFeedback,
+  ReviewRound,
 } from "@/types/portal";
 
 const phases: { key: ProjectPhase; label: string }[] = [
@@ -29,52 +35,47 @@ function phaseIndex(phase: ProjectPhase) {
 }
 
 const stateLabels: Record<string, { label: string; className: string }> = {
-  READY: {
-    label: "Live",
-    className: "bg-green-bg text-green",
-  },
-  BUILDING: {
-    label: "Bezig...",
-    className: "bg-blue-bg text-blue",
-  },
-  ERROR: {
-    label: "Fout",
-    className: "bg-[#fef2f2] text-[#ef4444]",
-  },
-  QUEUED: {
-    label: "Wachtrij",
-    className: "bg-accent-soft text-text-muted",
-  },
-  CANCELED: {
-    label: "Geannuleerd",
-    className: "bg-accent-soft text-text-muted",
-  },
+  READY: { label: "Live", className: "bg-green-bg text-green" },
+  BUILDING: { label: "Bezig...", className: "bg-blue-bg text-blue" },
+  ERROR: { label: "Fout", className: "bg-[#fef2f2] text-[#ef4444]" },
+  QUEUED: { label: "Wachtrij", className: "bg-accent-soft text-text-muted" },
+  CANCELED: { label: "Geannuleerd", className: "bg-accent-soft text-text-muted" },
+};
+
+const reviewStatusConfig: Record<string, { label: string; className: string; icon: typeof Clock }> = {
+  pending: { label: "Klaarstaan", className: "bg-accent-soft text-text-muted", icon: Clock },
+  active: { label: "Actief", className: "bg-blue-bg text-blue", icon: Eye },
+  completed: { label: "Afgerond", className: "bg-green-bg text-green", icon: CheckCircle2 },
 };
 
 export function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const { activeClientId } = useActiveClient();
 
   const [project, setProject] = useState<Project | null>(null);
   const [updates, setUpdates] = useState<ProjectUpdate[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Review rounds
+  const [reviewRounds, setReviewRounds] = useState<ReviewRound[]>([]);
 
   // Vercel preview state
   const [deployments, setDeployments] = useState<VercelDeployment[]>([]);
   const [deploymentsLoading, setDeploymentsLoading] = useState(false);
   const [deploymentsError, setDeploymentsError] = useState<string | null>(null);
 
-  // Feedback state
+  // Feedback state (for legacy free-form feedback)
   const [feedback, setFeedback] = useState<PreviewFeedback[]>([]);
   const [feedbackBody, setFeedbackBody] = useState("");
   const [sendingFeedback, setSendingFeedback] = useState(false);
 
-  // Load project + updates
+  // Load project + updates + review rounds
   useEffect(() => {
     if (!id) return;
 
     async function load() {
-      const [projRes, updRes, fbRes] = await Promise.all([
+      const [projRes, updRes, fbRes, rrRes] = await Promise.all([
         supabase.from("projects").select("*").eq("id", id).single(),
         supabase
           .from("project_updates")
@@ -85,12 +86,19 @@ export function ProjectDetail() {
           .from("preview_feedback")
           .select("*")
           .eq("project_id", id)
+          .is("review_round_id", null)
           .order("created_at", { ascending: true }),
+        supabase
+          .from("review_rounds")
+          .select("*")
+          .eq("project_id", id)
+          .order("week_number", { ascending: false }),
       ]);
 
       setProject(projRes.data as Project | null);
       setUpdates((updRes.data as ProjectUpdate[]) ?? []);
       setFeedback((fbRes.data as PreviewFeedback[]) ?? []);
+      setReviewRounds((rrRes.data as ReviewRound[]) ?? []);
       setLoading(false);
     }
 
@@ -117,16 +125,14 @@ export function ProjectDetail() {
     setDeploymentsLoading(false);
   }, [project?.vercel_project_id, id]);
 
-  // Fetch deployments when project loads + auto-refresh every 60s
   useEffect(() => {
     if (!project?.vercel_project_id) return;
-
     fetchDeployments();
     const interval = setInterval(fetchDeployments, 60_000);
     return () => clearInterval(interval);
   }, [fetchDeployments, project?.vercel_project_id]);
 
-  // Submit feedback
+  // Submit free-form feedback (legacy, for non-review-round feedback)
   async function handleFeedbackSubmit(e: FormEvent) {
     e.preventDefault();
     if (!feedbackBody.trim() || !user || !id) return;
@@ -138,9 +144,10 @@ export function ProjectDetail() {
       .from("preview_feedback")
       .insert({
         project_id: id,
-        client_id: user.id,
+        client_id: activeClientId,
         deployment_url: latestUrl,
         body: feedbackBody.trim(),
+        status: "open",
       })
       .select()
       .single();
@@ -168,7 +175,7 @@ export function ProjectDetail() {
           to="/portal/projecten"
           className="text-sm text-text mt-2 inline-block no-underline hover:underline"
         >
-          ← Terug naar projecten
+          Terug naar projecten
         </Link>
       </div>
     );
@@ -176,6 +183,7 @@ export function ProjectDetail() {
 
   const currentPhase = phaseIndex(project.phase);
   const latestDeployment = deployments[0] ?? null;
+  const activeReview = reviewRounds.find((r) => r.status === "active" || r.status === "pending");
 
   return (
     <div>
@@ -188,6 +196,33 @@ export function ProjectDetail() {
       </Link>
 
       <h1 className="text-2xl font-bold text-text mb-6">{project.title}</h1>
+
+      {/* Active review banner */}
+      {activeReview && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-[12px] bg-blue-bg border border-[#bfdbfe] p-4 mb-6"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-text">
+                Review ronde: {activeReview.title}
+              </p>
+              <p className="text-xs text-text-secondary mt-0.5">
+                Week {activeReview.week_number} — Bekijk de preview en geef je feedback
+              </p>
+            </div>
+            <Link
+              to={`/portal/projecten/${id}/review/${activeReview.id}`}
+              className="bg-text text-white rounded-[8px] px-4 py-2 text-sm font-semibold no-underline hover:bg-[#333] transition-colors flex items-center gap-1.5"
+            >
+              <Eye size={14} />
+              Bekijken
+            </Link>
+          </div>
+        </motion.div>
+      )}
 
       {/* Phase stepper */}
       <div className="rounded-[12px] bg-bg-white border border-border-light p-6 mb-6">
@@ -257,11 +292,51 @@ export function ProjectDetail() {
         )}
       </div>
 
-      {/* Vercel Preview */}
+      {/* Review Rounds */}
+      {reviewRounds.length > 0 && (
+        <div className="rounded-[12px] bg-bg-white border border-border-light p-6 mb-6">
+          <h2 className="text-sm font-semibold text-text mb-4">
+            Review rondes
+          </h2>
+          <div className="flex flex-col gap-3">
+            {reviewRounds.map((round) => {
+              const config = reviewStatusConfig[round.status];
+              const StatusIcon = config.icon;
+              return (
+                <Link
+                  key={round.id}
+                  to={`/portal/projecten/${id}/review/${round.id}`}
+                  className="flex items-center gap-3 p-3 rounded-[8px] border border-border-light hover:border-border no-underline transition-colors"
+                >
+                  <StatusIcon size={18} className={config.className.split(" ").pop()} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-text">
+                      {round.title}
+                    </p>
+                    <p className="text-xs text-text-muted">
+                      Week {round.week_number}
+                      {round.description && ` — ${round.description}`}
+                    </p>
+                  </div>
+                  <span
+                    className={`text-xs font-medium px-2.5 py-1 rounded-full ${config.className}`}
+                  >
+                    {config.label}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Vercel Preview (kept for direct preview access) */}
       {project.vercel_project_id && (
         <div className="rounded-[12px] bg-bg-white border border-border-light p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-text">Preview</h2>
+            <h2 className="text-sm font-semibold text-text">
+              Laatste preview
+            </h2>
             <button
               type="button"
               onClick={fetchDeployments}
@@ -286,8 +361,7 @@ export function ProjectDetail() {
             </div>
           ) : latestDeployment ? (
             <>
-              {/* Deployment info */}
-              <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center gap-3 mb-3">
                 <span
                   className={`text-xs font-medium px-2.5 py-1 rounded-full ${
                     stateLabels[latestDeployment.state]?.className ??
@@ -312,71 +386,16 @@ export function ProjectDetail() {
                 )}
               </div>
 
-              {/* Preview iframe */}
               {latestDeployment.state === "READY" && (
-                <>
-                  <div className="rounded-[8px] border border-border-light overflow-hidden mb-3">
-                    <iframe
-                      src={latestDeployment.url}
-                      title="Preview"
-                      sandbox="allow-scripts allow-same-origin"
-                      className="w-full h-[500px] border-0"
-                    />
-                  </div>
-                  <a
-                    href={latestDeployment.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-sm text-text font-medium no-underline hover:underline"
-                  >
-                    <ExternalLink size={14} />
-                    Open in nieuw tabblad
-                  </a>
-                </>
-              )}
-
-              {/* Other deployments */}
-              {deployments.length > 1 && (
-                <div className="mt-4 pt-4 border-t border-border-light">
-                  <p className="text-xs text-text-muted mb-2">
-                    Eerdere deployments
-                  </p>
-                  <div className="flex flex-col gap-1.5">
-                    {deployments.slice(1).map((d) => (
-                      <div
-                        key={d.uid}
-                        className="flex items-center gap-2 text-xs"
-                      >
-                        <span
-                          className={`font-medium px-2 py-0.5 rounded-full ${
-                            stateLabels[d.state]?.className ??
-                            "bg-accent-soft text-text-muted"
-                          }`}
-                        >
-                          {stateLabels[d.state]?.label ?? d.state}
-                        </span>
-                        <span className="text-text-muted">
-                          {new Date(d.created).toLocaleString("nl-NL", {
-                            day: "numeric",
-                            month: "short",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </span>
-                        {d.state === "READY" && (
-                          <a
-                            href={d.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-text hover:underline no-underline"
-                          >
-                            Bekijken
-                          </a>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <a
+                  href={latestDeployment.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-sm text-text font-medium no-underline hover:underline"
+                >
+                  <ExternalLink size={14} />
+                  Open preview in nieuw tabblad
+                </a>
               )}
             </>
           ) : (
@@ -387,10 +406,12 @@ export function ProjectDetail() {
         </div>
       )}
 
-      {/* Feedback */}
+      {/* Legacy Feedback (non-review-round) */}
       {project.vercel_project_id && (
         <div className="rounded-[12px] bg-bg-white border border-border-light p-6 mb-6">
-          <h2 className="text-sm font-semibold text-text mb-4">Feedback</h2>
+          <h2 className="text-sm font-semibold text-text mb-4">
+            Algemene feedback
+          </h2>
 
           {feedback.length === 0 ? (
             <p className="text-sm text-text-muted mb-4">
@@ -411,19 +432,6 @@ export function ProjectDetail() {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
-                    {fb.deployment_url && (
-                      <span className="ml-2">
-                        op{" "}
-                        <a
-                          href={fb.deployment_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-text-muted hover:text-text no-underline hover:underline"
-                        >
-                          preview
-                        </a>
-                      </span>
-                    )}
                   </p>
                 </div>
               ))}

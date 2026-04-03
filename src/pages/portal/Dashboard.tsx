@@ -1,65 +1,90 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { FolderKanban, MessageCircle, Receipt } from "lucide-react";
+import { FolderKanban, MessageCircle, Receipt, Eye } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
-import type { ProjectUpdate, Message } from "@/types/portal";
+import { useActiveClient } from "@/contexts/ClientContext";
+import type { ProjectUpdate, Message, ReviewRound } from "@/types/portal";
+
+interface ReviewWithProject extends ReviewRound {
+  projects: { title: string } | null;
+}
 
 export function Dashboard() {
   const { profile, user } = useAuth();
+  const { activeClientId } = useActiveClient();
   const [projectCount, setProjectCount] = useState(0);
   const [messageCount, setMessageCount] = useState(0);
   const [invoiceCount, setInvoiceCount] = useState(0);
+  const [openReviewCount, setOpenReviewCount] = useState(0);
   const [recentUpdates, setRecentUpdates] = useState<ProjectUpdate[]>([]);
   const [recentMessages, setRecentMessages] = useState<Message[]>([]);
+  const [openReviews, setOpenReviews] = useState<ReviewWithProject[]>([]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !activeClientId) return;
 
     async function load() {
-      const [projects, messages, invoices, updates, msgs] = await Promise.all([
-        supabase
-          .from("projects")
-          .select("id", { count: "exact", head: true })
-          .eq("client_id", user!.id),
-        supabase
-          .from("messages")
-          .select("id", { count: "exact", head: true })
-          .eq("sender_id", user!.id),
-        supabase
-          .from("invoices")
-          .select("id", { count: "exact", head: true })
-          .eq("client_id", user!.id)
-          .eq("status", "verstuurd"),
-        supabase
-          .from("project_updates")
-          .select("*, projects!inner(client_id)")
-          .eq("projects.client_id", user!.id)
-          .order("created_at", { ascending: false })
-          .limit(5),
-        supabase
-          .from("messages")
-          .select("*")
-          .eq("sender_id", user!.id)
-          .order("created_at", { ascending: false })
-          .limit(5),
-      ]);
+      const [projects, messages, invoices, updates, msgs, reviews] =
+        await Promise.all([
+          supabase
+            .from("projects")
+            .select("id", { count: "exact", head: true })
+            .eq("client_id", activeClientId!),
+          supabase
+            .from("messages")
+            .select("id", { count: "exact", head: true })
+            .eq("sender_id", user!.id),
+          supabase
+            .from("invoices")
+            .select("id", { count: "exact", head: true })
+            .eq("client_id", activeClientId!)
+            .eq("status", "verstuurd"),
+          supabase
+            .from("project_updates")
+            .select("*, projects!inner(client_id)")
+            .eq("projects.client_id", activeClientId!)
+            .order("created_at", { ascending: false })
+            .limit(5),
+          supabase
+            .from("messages")
+            .select("*")
+            .eq("sender_id", user!.id)
+            .order("created_at", { ascending: false })
+            .limit(5),
+          supabase
+            .from("review_rounds")
+            .select("*, projects!inner(title, client_id)")
+            .eq("projects.client_id", activeClientId!)
+            .in("status", ["pending", "active"])
+            .order("created_at", { ascending: false }),
+        ]);
 
       setProjectCount(projects.count ?? 0);
       setMessageCount(messages.count ?? 0);
       setInvoiceCount(invoices.count ?? 0);
       setRecentUpdates((updates.data as ProjectUpdate[]) ?? []);
       setRecentMessages((msgs.data as Message[]) ?? []);
+
+      const reviewData = (reviews.data ?? []) as ReviewWithProject[];
+      setOpenReviews(reviewData);
+      setOpenReviewCount(reviewData.length);
     }
 
     load();
-  }, [user]);
+  }, [user, activeClientId]);
 
   const stats = [
     {
       label: "Actieve projecten",
       value: projectCount,
       icon: FolderKanban,
+      to: "/portal/projecten",
+    },
+    {
+      label: "Openstaande reviews",
+      value: openReviewCount,
+      icon: Eye,
       to: "/portal/projecten",
     },
     {
@@ -83,7 +108,7 @@ export function Dashboard() {
       </h1>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {stats.map((stat) => (
           <Link
             key={stat.label}
@@ -98,6 +123,38 @@ export function Dashboard() {
           </Link>
         ))}
       </div>
+
+      {/* Open reviews quick access */}
+      {openReviews.length > 0 && (
+        <div className="rounded-[12px] bg-blue-bg border border-[#bfdbfe] p-6 mb-8">
+          <h2 className="text-lg font-semibold text-text mb-3 flex items-center gap-2">
+            <Eye size={20} />
+            Openstaande reviews
+          </h2>
+          <div className="flex flex-col gap-2">
+            {openReviews.map((review) => (
+              <Link
+                key={review.id}
+                to={`/portal/projecten/${review.project_id}/review/${review.id}`}
+                className="flex items-center justify-between p-3 rounded-[8px] bg-bg-white border border-border-light no-underline hover:shadow-xs transition-shadow"
+              >
+                <div>
+                  <p className="text-sm font-medium text-text">
+                    {review.title}
+                  </p>
+                  <p className="text-xs text-text-muted">
+                    {review.projects?.title ?? "Project"} — Week{" "}
+                    {review.week_number}
+                  </p>
+                </div>
+                <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-blue-bg text-blue">
+                  Bekijken
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Recent activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

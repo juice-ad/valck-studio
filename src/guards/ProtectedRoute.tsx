@@ -1,8 +1,13 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import type { UserRole } from "@/types/portal";
 
-export function ProtectedRoute() {
-  const { session, loading } = useAuth();
+interface Props {
+  allowedRoles?: UserRole[];
+}
+
+export function ProtectedRoute({ allowedRoles }: Props) {
+  const { session, profile, loading } = useAuth();
 
   if (loading) {
     return (
@@ -14,6 +19,13 @@ export function ProtectedRoute() {
 
   if (!session) {
     return <Navigate to="/portal/login" replace />;
+  }
+
+  if (allowedRoles && profile && !allowedRoles.includes(profile.role)) {
+    if (profile.role === "admin") {
+      return <Navigate to="/admin" replace />;
+    }
+    return <Navigate to="/portal/dashboard" replace />;
   }
 
   return <Outlet />;

@@ -6,7 +6,7 @@ interface Props {
   onMenuToggle: () => void;
 }
 
-export function PortalHeader({ onMenuToggle }: Props) {
+export function AdminHeader({ onMenuToggle }: Props) {
   const { profile, user } = useAuth();
 
   const displayName = profile?.full_name || user?.email || "";
@@ -28,11 +28,11 @@ export function PortalHeader({ onMenuToggle }: Props) {
       </button>
 
       <Link
-        to="/"
+        to="/admin"
         className="font-bold text-lg tracking-[-0.5px] text-text no-underline"
       >
         valck
-        <span className="font-light text-text-muted ml-1.5">studio</span>
+        <span className="font-light text-text-muted ml-1.5">admin</span>
       </Link>
 
       <div className="w-8 h-8 rounded-full bg-text text-white text-xs font-semibold flex items-center justify-center">
