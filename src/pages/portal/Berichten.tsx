@@ -1,52 +1,71 @@
-import { useEffect, useState, useRef, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Send } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
+import { usePresence } from "@/hooks/usePresence";
 import type { Message } from "@/types/portal";
 
 export function Berichten() {
-  const { user } = useAuth();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const { user, profile } = useAuth();
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
-  const [loading, setLoading] = useState(true);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!user) return;
+  const { messages, loading, setMessages, markAsRead } = useRealtimeMessages({
+    userId: user?.id,
+    projectId: null, // General channel
+  });
 
-    supabase
-      .from("messages")
-      .select("*")
-      .or(`sender_id.eq.${user.id},is_from_studio.eq.true`)
-      .order("created_at", { ascending: true })
-      .then(({ data }) => {
-        setMessages((data as Message[]) ?? []);
-        setLoading(false);
-      });
-  }, [user]);
+  const { typingUsers, setTyping } = usePresence({
+    channelName: user ? `chat:${user.id}` : "",
+    userId: user?.id ?? "",
+    userName: profile?.full_name ?? "",
+  });
 
+  // Scroll to bottom on new messages
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Mark unread messages as read
+  useEffect(() => {
+    if (!user || messages.length === 0) return;
+    const unread = messages
+      .filter((m) => m.is_from_studio && !(m as Message & { is_read?: boolean }).is_read)
+      .map((m) => m.id);
+    if (unread.length > 0) markAsRead(unread);
+  }, [messages, user, markAsRead]);
+
+  function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setBody(e.target.value);
+    setTyping(true);
+  }
 
   async function handleSend(e: FormEvent) {
     e.preventDefault();
     if (!body.trim() || !user) return;
 
     setSending(true);
+    setTyping(false);
+
     const { data, error } = await supabase
       .from("messages")
       .insert({
         sender_id: user.id,
         body: body.trim(),
         is_from_studio: false,
+        project_id: null,
       })
       .select()
       .single();
 
     if (!error && data) {
-      setMessages((prev) => [...prev, data as Message]);
+      // Message will arrive via realtime, but add optimistically
+      setMessages((prev) => {
+        if (prev.find((m) => m.id === (data as Message).id)) return prev;
+        return [...prev, data as Message];
+      });
       setBody("");
     }
     setSending(false);
@@ -59,6 +78,8 @@ export function Berichten() {
       </div>
     );
   }
+
+  const isOtherTyping = typingUsers.length > 0;
 
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)] md:h-[calc(100vh-6rem)]">
@@ -105,6 +126,20 @@ export function Berichten() {
             <div ref={bottomRef} />
           </div>
         )}
+
+        {/* Typing indicator */}
+        {isOtherTyping && (
+          <div className="flex items-center gap-2 mt-2 ml-1">
+            <div className="flex gap-1">
+              <span className="w-1.5 h-1.5 bg-text-muted rounded-full animate-bounce [animation-delay:0ms]" />
+              <span className="w-1.5 h-1.5 bg-text-muted rounded-full animate-bounce [animation-delay:150ms]" />
+              <span className="w-1.5 h-1.5 bg-text-muted rounded-full animate-bounce [animation-delay:300ms]" />
+            </div>
+            <span className="text-xs text-text-muted">
+              Valck Studio is aan het typen...
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Input */}
@@ -115,7 +150,7 @@ export function Berichten() {
         <input
           type="text"
           value={body}
-          onChange={(e) => setBody(e.target.value)}
+          onChange={handleInputChange}
           placeholder="Typ een bericht..."
           className="flex-1 rounded-[8px] border border-border-light bg-bg px-3 py-2.5 text-sm text-text placeholder:text-text-muted outline-none focus:border-text transition-colors"
         />

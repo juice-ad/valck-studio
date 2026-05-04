@@ -19,6 +19,11 @@ import { Berichten } from "@/pages/portal/Berichten";
 import { Documenten } from "@/pages/portal/Documenten";
 import { Facturen } from "@/pages/portal/Facturen";
 import { Discovery } from "@/pages/portal/Discovery";
+import { Tickets } from "@/pages/portal/Tickets";
+import { TicketDetail } from "@/pages/portal/TicketDetail";
+import { BuildRequests } from "@/pages/portal/BuildRequests";
+import { BuildRequestDetail } from "@/pages/portal/BuildRequestDetail";
+import { MijnPlatform } from "@/pages/portal/MijnPlatform";
 import { AdminDashboard } from "@/pages/admin/AdminDashboard";
 import { AdminClients } from "@/pages/admin/AdminClients";
 import { AdminClientDetail } from "@/pages/admin/AdminClientDetail";
@@ -30,6 +35,12 @@ import { AdminBriefDetail } from "@/pages/admin/AdminBriefDetail";
 import { AdminBerichten } from "@/pages/admin/AdminBerichten";
 import { AdminDocumenten } from "@/pages/admin/AdminDocumenten";
 import { AdminFacturen } from "@/pages/admin/AdminFacturen";
+import { AdminTickets } from "@/pages/admin/AdminTickets";
+import { AdminTicketDetail } from "@/pages/admin/AdminTicketDetail";
+import { AdminBuildRequests } from "@/pages/admin/AdminBuildRequests";
+import { AdminBuildRequestDetail } from "@/pages/admin/AdminBuildRequestDetail";
+import { AdminPlatforms } from "@/pages/admin/AdminPlatforms";
+import { AdminSubscriptions } from "@/pages/admin/AdminSubscriptions";
 
 function App() {
   return (
@@ -93,6 +104,11 @@ function App() {
           <Route path="/portal/berichten" element={<Berichten />} />
           <Route path="/portal/documenten" element={<Documenten />} />
           <Route path="/portal/facturen" element={<Facturen />} />
+          <Route path="/portal/tickets" element={<Tickets />} />
+          <Route path="/portal/tickets/:id" element={<TicketDetail />} />
+          <Route path="/portal/build-requests" element={<BuildRequests />} />
+          <Route path="/portal/build-requests/:id" element={<BuildRequestDetail />} />
+          <Route path="/portal/mijn-platform" element={<MijnPlatform />} />
         </Route>
       </Route>
       {/* Admin (beveiligd, alleen admin role) */}
@@ -109,6 +125,12 @@ function App() {
           <Route path="/admin/berichten" element={<AdminBerichten />} />
           <Route path="/admin/documenten" element={<AdminDocumenten />} />
           <Route path="/admin/facturen" element={<AdminFacturen />} />
+          <Route path="/admin/tickets" element={<AdminTickets />} />
+          <Route path="/admin/tickets/:id" element={<AdminTicketDetail />} />
+          <Route path="/admin/build-requests" element={<AdminBuildRequests />} />
+          <Route path="/admin/build-requests/:id" element={<AdminBuildRequestDetail />} />
+          <Route path="/admin/platforms" element={<AdminPlatforms />} />
+          <Route path="/admin/subscriptions" element={<AdminSubscriptions />} />
         </Route>
       </Route>
     </Routes>

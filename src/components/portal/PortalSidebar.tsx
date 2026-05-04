@@ -7,6 +7,9 @@ import {
   FileText,
   Receipt,
   Sparkles,
+  LifeBuoy,
+  Hammer,
+  Globe,
   LogOut,
   Settings,
   ChevronsUpDown,
@@ -31,6 +34,9 @@ const navItems = [
   { label: "Berichten", to: "/portal/berichten", icon: MessageCircle },
   { label: "Documenten", to: "/portal/documenten", icon: FileText },
   { label: "Facturen", to: "/portal/facturen", icon: Receipt },
+  { label: "Tickets", to: "/portal/tickets", icon: LifeBuoy },
+  { label: "Build Requests", to: "/portal/build-requests", icon: Hammer },
+  { label: "Mijn Platform", to: "/portal/mijn-platform", icon: Globe },
 ];
 
 interface Props {

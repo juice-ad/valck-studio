@@ -14,6 +14,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useActiveClient } from "@/contexts/ClientContext";
 import type { DiscoveryBrief } from "@/types/portal";
+import { detectActiveBranches } from "@/lib/intake-branches";
 import { StepIndicator } from "@/components/discovery/StepIndicator";
 import { StepWelcome } from "@/components/discovery/StepWelcome";
 import { StepBusiness } from "@/components/discovery/StepBusiness";
@@ -53,6 +54,12 @@ export function Discovery() {
 
   // Additional notes (only on summary step, not auto-saved)
   const [additionalNotes, setAdditionalNotes] = useState("");
+
+  // Branch responses for conditional questions
+  const [branchResponses, setBranchResponses] = useState<Record<string, string>>({});
+
+  // Detect active branches based on current form data (passed to step components)
+  void detectActiveBranches;
 
   // Debounce timer ref
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -94,6 +101,7 @@ export function Discovery() {
         setFormData(brief);
         setSelectedFeatures(brief.selected_features ?? []);
         setAdditionalNotes(brief.additional_notes ?? "");
+        setBranchResponses((brief as unknown as { branch_responses?: Record<string, string> }).branch_responses ?? {});
         // Resume at saved step
         setStep(brief.current_step ?? 0);
       }
@@ -144,10 +152,11 @@ export function Discovery() {
       brand_colors: formData.brand_colors?.trim() || null,
       brand_notes: formData.brand_notes?.trim() || null,
       additional_notes: additionalNotes.trim() || null,
+      branch_responses: branchResponses,
       questionnaire_version: 2,
       current_step: step,
     };
-  }, [formData, selectedFeatures, additionalNotes, step, activeClientId]);
+  }, [formData, selectedFeatures, additionalNotes, branchResponses, step, activeClientId]);
 
   // Save draft to DB
   const saveDraft = useCallback(

@@ -117,6 +117,109 @@ export interface InvoiceLineItem {
   price_cents: number;
 }
 
+// --- Support Tickets ---
+
+export type TicketPriority = "laag" | "normaal" | "hoog" | "urgent";
+export type TicketStatus = "open" | "in_behandeling" | "opgelost" | "gesloten";
+
+export interface Ticket {
+  id: string;
+  client_id: string;
+  subject: string;
+  description: string;
+  priority: TicketPriority;
+  status: TicketStatus;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TicketMessage {
+  id: string;
+  ticket_id: string;
+  sender_id: string;
+  body: string;
+  is_from_studio: boolean;
+  created_at: string;
+}
+
+// --- Build Requests ---
+
+export type BuildRequestStatus =
+  | "ingediend"
+  | "in_scoping"
+  | "offerte"
+  | "akkoord"
+  | "afgewezen"
+  | "in_bouw"
+  | "opgeleverd";
+
+export interface BuildRequestLineItem {
+  id: string;
+  build_request_id: string;
+  description: string;
+  amount_cents: number;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface BuildRequest {
+  id: string;
+  client_id: string;
+  title: string;
+  description: string;
+  desired_outcome: string;
+  context: string | null;
+  priority: "normaal" | "hoog";
+  status: BuildRequestStatus;
+  scoping_notes: string | null;
+  quoted_amount_cents: number | null;
+  created_by: string;
+  approved_at: string | null;
+  created_at: string;
+  updated_at: string;
+  line_items?: BuildRequestLineItem[];
+}
+
+// --- Subscriptions ---
+
+export interface SubscriptionTier {
+  id: string;
+  name: string;
+  description: string | null;
+  price_cents: number;
+  features: string[];
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface Subscription {
+  id: string;
+  client_id: string;
+  tier_id: string;
+  start_date: string;
+  end_date: string | null;
+  created_at: string;
+  tier?: SubscriptionTier;
+}
+
+// --- Platforms ---
+
+export type PlatformStatus = "development" | "staging" | "live" | "maintenance";
+
+export interface Platform {
+  id: string;
+  client_id: string;
+  name: string;
+  live_url: string | null;
+  accent_color: string;
+  modules: string[];
+  status: PlatformStatus;
+  created_at: string;
+  updated_at: string;
+}
+
 // --- Discovery Flow ---
 
 export type DiscoveryBriefStatus = "draft" | "submitted" | "reviewed";

@@ -6,6 +6,10 @@ import {
   Building2,
   Users,
   MessageCircle,
+  LifeBuoy,
+  Hammer,
+  Globe,
+  CreditCard,
   Receipt,
   FileText,
   LogOut,
@@ -43,6 +47,15 @@ const navSections = [
       { label: "Organisaties", to: "/admin/clients", icon: Building2 },
       { label: "Gebruikers", to: "/admin/users", icon: Users },
       { label: "Berichten", to: "/admin/berichten", icon: MessageCircle },
+      { label: "Tickets", to: "/admin/tickets", icon: LifeBuoy },
+      { label: "Build Requests", to: "/admin/build-requests", icon: Hammer },
+    ],
+  },
+  {
+    label: "Platform",
+    items: [
+      { label: "Platforms", to: "/admin/platforms", icon: Globe },
+      { label: "Abonnementen", to: "/admin/subscriptions", icon: CreditCard },
     ],
   },
   {
