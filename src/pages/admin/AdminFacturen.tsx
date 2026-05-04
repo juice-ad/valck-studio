@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Plus, Send, ExternalLink, Copy, Check } from "lucide-react";
+import { Plus, Send, ExternalLink, Copy, Check, Trash2, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { DataTable } from "@/components/admin/DataTable";
@@ -28,13 +28,31 @@ import {
 
 interface ClientOption { id: string; company_name: string; }
 
+interface LineItemForm {
+  description: string;
+  quantity: string;
+  priceCents: string; // EUR input as string
+}
+
+const emptyLineItem: LineItemForm = { description: "", quantity: "1", priceCents: "" };
+
 export function AdminFacturen() {
   const [invoices, setInvoices] = useState<InvoiceRow[]>([]);
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ number: "", description: "", amount: "", client_id: "", due_date: "" });
+
+  // Create form state
+  const [clientId, setClientId] = useState("");
+  const [dueDate, setDueDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 30);
+    return d.toISOString().split("T")[0];
+  });
+  const [reference, setReference] = useState("");
+  const [sendEmail, setSendEmail] = useState(true);
+  const [lineItems, setLineItems] = useState<LineItemForm[]>([{ ...emptyLineItem }]);
 
   // Status edit
   const [editInvoice, setEditInvoice] = useState<InvoiceRow | null>(null);
@@ -42,6 +60,7 @@ export function AdminFacturen() {
   const [savingStatus, setSavingStatus] = useState(false);
   const [sendingPaymentLink, setSendingPaymentLink] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   async function loadInvoices() {
     setLoading(true);
@@ -58,29 +77,98 @@ export function AdminFacturen() {
     supabase.from("clients").select("id, company_name").order("company_name").then(({ data }) => setClients((data as ClientOption[]) ?? []));
   }, []);
 
+  // --- Line item helpers ---
+
+  function updateLineItem(index: number, field: keyof LineItemForm, value: string) {
+    setLineItems((prev) => prev.map((item, i) => i === index ? { ...item, [field]: value } : item));
+  }
+
+  function addLineItem() {
+    setLineItems((prev) => [...prev, { ...emptyLineItem }]);
+  }
+
+  function removeLineItem(index: number) {
+    setLineItems((prev) => prev.length > 1 ? prev.filter((_, i) => i !== index) : prev);
+  }
+
+  function lineItemCents(item: LineItemForm): number {
+    const price = parseFloat(item.priceCents);
+    const qty = parseFloat(item.quantity);
+    if (isNaN(price) || isNaN(qty)) return 0;
+    return Math.round(price * 100) * qty;
+  }
+
+  const totalExclBtw = lineItems.reduce((sum, item) => sum + lineItemCents(item), 0);
+  const btwAmount = Math.round(totalExclBtw * 0.21);
+  const totalInclBtw = totalExclBtw + btwAmount;
+
+  function resetCreateForm() {
+    setClientId("");
+    const d = new Date();
+    d.setDate(d.getDate() + 30);
+    setDueDate(d.toISOString().split("T")[0]);
+    setReference("");
+    setSendEmail(true);
+    setLineItems([{ ...emptyLineItem }]);
+  }
+
+  // --- Handlers ---
+
   async function handleCreate(e: FormEvent) {
     e.preventDefault();
-    if (!form.number.trim() || !form.client_id || !form.amount) return;
+    if (!clientId) return;
+
+    const validItems = lineItems.filter(
+      (item) => item.description.trim() && parseFloat(item.priceCents) > 0 && parseFloat(item.quantity) > 0
+    );
+    if (validItems.length === 0) {
+      toast.error("Voeg minstens één regelitem toe");
+      return;
+    }
+
     setSaving(true);
 
-    const { error } = await supabase.from("invoices").insert({
-      number: form.number.trim(),
-      description: form.description.trim() || null,
-      amount_cents: Math.round(parseFloat(form.amount) * 100),
-      client_id: form.client_id,
-      due_date: form.due_date || null,
-      status: "concept",
-    });
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Niet ingelogd");
 
-    if (error) {
-      toast.error("Fout bij aanmaken factuur");
-    } else {
-      toast.success("Factuur aangemaakt");
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-full-invoice`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            clientId,
+            items: validItems.map((item) => ({
+              description: item.description.trim(),
+              quantity: parseFloat(item.quantity),
+              priceCents: Math.round(parseFloat(item.priceCents) * 100),
+            })),
+            dueDate: dueDate || undefined,
+            reference: reference.trim() || undefined,
+            sendEmail,
+          }),
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Fout bij aanmaken factuur");
+      }
+
+      toast.success(`Factuur ${data.number} aangemaakt${sendEmail ? " en verstuurd" : ""}`);
       setShowCreate(false);
-      setForm({ number: "", description: "", amount: "", client_id: "", due_date: "" });
+      resetCreateForm();
       loadInvoices();
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   }
 
   async function handleStatusSave() {
@@ -145,12 +233,43 @@ export function AdminFacturen() {
     }
   }
 
-  // Extended invoice row with payment fields
-  const editInvoiceExtended = editInvoice as InvoiceRow & {
-    mollie_payment_link_url?: string | null;
-    paid_at?: string | null;
-    payment_method?: string | null;
-  };
+  async function handleDownloadPdf() {
+    if (!editInvoice) return;
+    setDownloadingPdf(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Niet ingelogd");
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-invoice-pdf?invoiceId=${editInvoice.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        }
+      );
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Fout bij downloaden PDF");
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Factuur-${editInvoice.number}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setDownloadingPdf(false);
+    }
+  }
 
   return (
     <div>
@@ -171,69 +290,129 @@ export function AdminFacturen() {
         }
       />
 
-      {/* Create dialog */}
-      <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent>
+      {/* Create dialog with line items */}
+      <Dialog open={showCreate} onOpenChange={(open) => { if (!open) { setShowCreate(false); resetCreateForm(); } else { setShowCreate(true); } }}>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Nieuwe factuur</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleCreate} className="flex flex-col gap-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-text mb-1.5">Nummer *</label>
-                <Input
-                  required
-                  value={form.number}
-                  onChange={(e) => setForm({ ...form, number: e.target.value })}
-                  placeholder="VS-2026-001"
-                />
+                <label className="block text-sm font-medium text-text mb-1.5">Organisatie *</label>
+                <Select value={clientId} onValueChange={setClientId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Kies organisatie..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clients.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.company_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-text mb-1.5">Bedrag (EUR) *</label>
+                <label className="block text-sm font-medium text-text mb-1.5">Vervaldatum</label>
                 <Input
-                  required
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={form.amount}
-                  onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                  placeholder="1500.00"
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
                 />
               </div>
             </div>
+
             <div>
-              <label className="block text-sm font-medium text-text mb-1.5">Organisatie *</label>
-              <Select
-                value={form.client_id}
-                onValueChange={(val) => setForm({ ...form, client_id: val })}
+              <label className="block text-sm font-medium text-text mb-1.5">Referentie</label>
+              <Input
+                value={reference}
+                onChange={(e) => setReference(e.target.value)}
+                placeholder="Optionele referentie..."
+              />
+            </div>
+
+            {/* Line items */}
+            <div>
+              <label className="block text-sm font-medium text-text mb-2">Regelitems *</label>
+              <div className="flex flex-col gap-2">
+                {lineItems.map((item, index) => (
+                  <div key={index} className="grid grid-cols-[1fr_80px_120px_32px] gap-2 items-start">
+                    <Input
+                      placeholder="Omschrijving"
+                      value={item.description}
+                      onChange={(e) => updateLineItem(index, "description", e.target.value)}
+                      required
+                    />
+                    <Input
+                      type="number"
+                      min="1"
+                      step="1"
+                      placeholder="Aantal"
+                      value={item.quantity}
+                      onChange={(e) => updateLineItem(index, "quantity", e.target.value)}
+                      required
+                    />
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="Prijs (EUR)"
+                      value={item.priceCents}
+                      onChange={(e) => updateLineItem(index, "priceCents", e.target.value)}
+                      required
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeLineItem(index)}
+                      disabled={lineItems.length === 1}
+                      className="h-9 w-8 p-0"
+                    >
+                      <Trash2 size={14} />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addLineItem}
+                className="mt-2"
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Kies organisatie..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {clients.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.company_name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <Plus size={14} /> Regelitem toevoegen
+              </Button>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-text mb-1.5">Omschrijving</label>
-              <Input
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
+
+            {/* Totals */}
+            <div className="rounded-[8px] bg-accent-soft p-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-text-muted">Subtotaal excl. BTW</span>
+                <span className="text-text">{formatCents(totalExclBtw)}</span>
+              </div>
+              <div className="flex justify-between mt-1">
+                <span className="text-text-muted">BTW (21%)</span>
+                <span className="text-text">{formatCents(btwAmount)}</span>
+              </div>
+              <div className="flex justify-between mt-1 font-semibold border-t border-border pt-1">
+                <span className="text-text">Totaal incl. BTW</span>
+                <span className="text-text">{formatCents(totalInclBtw)}</span>
+              </div>
+            </div>
+
+            {/* Send email checkbox */}
+            <label className="flex items-center gap-2 text-sm text-text cursor-pointer">
+              <input
+                type="checkbox"
+                checked={sendEmail}
+                onChange={(e) => setSendEmail(e.target.checked)}
+                className="rounded border-border"
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-text mb-1.5">Vervaldatum</label>
-              <Input
-                type="date"
-                value={form.due_date}
-                onChange={(e) => setForm({ ...form, due_date: e.target.value })}
-              />
-            </div>
-            <Button type="submit" disabled={saving}>
-              {saving ? "Opslaan..." : "Aanmaken"}
+              Verstuur per email via Moneybird
+            </label>
+
+            <Button type="submit" disabled={saving || !clientId}>
+              {saving ? "Aanmaken..." : "Factuur aanmaken"}
             </Button>
           </form>
         </DialogContent>
@@ -241,7 +420,7 @@ export function AdminFacturen() {
 
       {/* Invoice detail / status edit dialog */}
       <Dialog open={!!editInvoice} onOpenChange={(open) => { if (!open) setEditInvoice(null); }}>
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Factuur {editInvoice?.number ?? ""}</DialogTitle>
           </DialogHeader>
@@ -258,8 +437,39 @@ export function AdminFacturen() {
                 </div>
               </div>
 
+              {/* Line items detail */}
+              {editInvoice.line_items && editInvoice.line_items.length > 0 && (
+                <div>
+                  <p className="text-xs text-text-muted mb-1.5">Regelitems</p>
+                  <div className="rounded-[8px] bg-accent-soft p-3 text-sm">
+                    {editInvoice.line_items.map((item, i) => (
+                      <div key={i} className="flex justify-between py-0.5">
+                        <span className="text-text">
+                          {item.quantity}x {item.description}
+                        </span>
+                        <span className="text-text-secondary whitespace-nowrap">
+                          {formatCents(item.price_cents * item.quantity)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* PDF download */}
+              {editInvoice.moneybird_invoice_id && (
+                <Button
+                  variant="outline"
+                  onClick={handleDownloadPdf}
+                  disabled={downloadingPdf}
+                >
+                  <FileDown size={14} />
+                  {downloadingPdf ? "Downloaden..." : "Download PDF"}
+                </Button>
+              )}
+
               {/* Payment link section */}
-              {editInvoiceExtended.mollie_payment_link_url ? (
+              {editInvoice.mollie_payment_link_url ? (
                 <div className="rounded-[8px] bg-green-bg border border-green-border p-3">
                   <p className="text-xs font-medium text-green mb-2">Betaallink actief</p>
                   <div className="flex items-center gap-2">
@@ -277,7 +487,7 @@ export function AdminFacturen() {
                       asChild
                     >
                       <a
-                        href={editInvoiceExtended.mollie_payment_link_url}
+                        href={editInvoice.mollie_payment_link_url}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
@@ -285,10 +495,10 @@ export function AdminFacturen() {
                       </a>
                     </Button>
                   </div>
-                  {editInvoiceExtended.paid_at && (
+                  {editInvoice.paid_at && (
                     <p className="text-xs text-green mt-2">
-                      Betaald op {new Date(editInvoiceExtended.paid_at).toLocaleDateString("nl-NL")}
-                      {editInvoiceExtended.payment_method && ` via ${editInvoiceExtended.payment_method}`}
+                      Betaald op {new Date(editInvoice.paid_at).toLocaleDateString("nl-NL")}
+                      {editInvoice.payment_method && ` via ${editInvoice.payment_method}`}
                     </p>
                   )}
                 </div>

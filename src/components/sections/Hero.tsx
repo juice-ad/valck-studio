@@ -35,9 +35,9 @@ export function Hero() {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="text-lg text-text-secondary max-w-[560px] mx-auto mb-9 leading-[1.7]"
         >
-          Solo product studio voor founders die een B2B SaaS willen bouwen.
-          Discovery in 2 weken, MVP in 6-10 weken. Vaste prijs, volledige
-          eigendom.
+          Maatwerk webapplicaties met een persoonlijke aanpak. Een diepgaande
+          intake waar we je bedrijf écht leren kennen, een portaal waar je alles
+          volgt, en een product dat precies doet wat jij nodig hebt.
         </motion.p>
 
         {/* Buttons */}

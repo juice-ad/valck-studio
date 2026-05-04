@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getPayment } from "../_shared/mollie.ts";
+import { registerPayment as registerMoneybirdPayment } from "../_shared/moneybird.ts";
 
 /**
  * Mollie Webhook Handler
@@ -89,6 +90,30 @@ Deno.serve(async (req) => {
         .eq("id", invoiceId);
 
       console.log(`Invoice ${invoiceId} marked as paid via ${payment.method}`);
+
+      // Register payment in Moneybird (non-blocking — webhook must always return 200)
+      try {
+        const { data: fullInvoice } = await supabase
+          .from("invoices")
+          .select("moneybird_invoice_id, amount_cents")
+          .eq("id", invoiceId)
+          .single();
+
+        if (fullInvoice?.moneybird_invoice_id) {
+          const today = new Date().toISOString().split("T")[0];
+          const amount = (fullInvoice.amount_cents / 100).toFixed(2);
+
+          await registerMoneybirdPayment(fullInvoice.moneybird_invoice_id, {
+            payment_date: today,
+            price: amount,
+          });
+
+          console.log(`Moneybird payment registered for invoice ${invoiceId}`);
+        }
+      } catch (mbErr) {
+        // Log but don't fail — Mollie webhook must always succeed
+        console.error("Moneybird payment registration failed:", mbErr);
+      }
     } else if (payment.status === "expired" || payment.status === "failed" || payment.status === "canceled") {
       // Only mark as vervallen if not already paid
       const { data: currentInvoice } = await supabase
