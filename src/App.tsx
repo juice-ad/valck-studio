@@ -32,6 +32,7 @@ import { AdminBerichten } from "@/pages/admin/AdminBerichten";
 import { AdminDocumenten } from "@/pages/admin/AdminDocumenten";
 import { AdminFacturen } from "@/pages/admin/AdminFacturen";
 import { AdminInstellingen } from "@/pages/admin/AdminInstellingen";
+import { AdminLibrary } from "@/pages/admin/AdminLibrary";
 
 function App() {
   return (
@@ -113,6 +114,7 @@ function App() {
           <Route path="/admin/documenten" element={<AdminDocumenten />} />
           <Route path="/admin/facturen" element={<AdminFacturen />} />
           <Route path="/admin/instellingen" element={<AdminInstellingen />} />
+          <Route path="/admin/bibliotheek" element={<AdminLibrary />} />
         </Route>
       </Route>
     </Routes>

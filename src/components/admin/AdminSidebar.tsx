@@ -8,6 +8,7 @@ import {
   MessageCircle,
   Receipt,
   FileText,
+  Library,
   LogOut,
   Settings,
   ChevronsUpDown,
@@ -35,6 +36,7 @@ const navSections = [
     items: [
       { label: "Projecten", to: "/admin/projecten", icon: FolderKanban },
       { label: "Intakes", to: "/admin/briefs", icon: Sparkles },
+      { label: "Bibliotheek", to: "/admin/bibliotheek", icon: Library },
     ],
   },
   {
