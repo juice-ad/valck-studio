@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Sparkles, RefreshCw } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { DiscoveryBrief } from "@/types/portal";
 import { featureCategories } from "@/lib/discovery-features";
@@ -10,6 +10,8 @@ export function AdminBriefDetail() {
   const [brief, setBrief] = useState<DiscoveryBrief | null>(null);
   const [loading, setLoading] = useState(true);
   const [marking, setMarking] = useState(false);
+  const [generatingSummary, setGeneratingSummary] = useState(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -25,6 +27,37 @@ export function AdminBriefDetail() {
     await supabase.from("discovery_briefs").update({ status: "reviewed" }).eq("id", id);
     setBrief((prev) => prev ? { ...prev, status: "reviewed" } : prev);
     setMarking(false);
+  }
+
+  async function generateSummary() {
+    if (!id) return;
+    setGeneratingSummary(true);
+    setSummaryError(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-brief-summary`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({ briefId: id }),
+        }
+      );
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Kon samenvatting niet genereren");
+      setBrief((prev) =>
+        prev
+          ? { ...prev, ai_summary: result.summary, ai_summary_generated_at: result.generated_at }
+          : prev
+      );
+    } catch (err) {
+      setSummaryError((err as Error).message);
+    } finally {
+      setGeneratingSummary(false);
+    }
   }
 
   if (loading) {
@@ -85,6 +118,62 @@ export function AdminBriefDetail() {
             <CheckCircle2 size={16} />
             {marking ? "Bezig..." : "Markeer als beoordeeld"}
           </button>
+        )}
+      </div>
+
+      {/* AI Summary */}
+      <div className="rounded-[12px] bg-bg-white border border-border-light p-6 mb-4">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-semibold text-text flex items-center gap-2">
+            <Sparkles size={14} />
+            AI-samenvatting
+          </h2>
+          {brief.status !== "draft" && (
+            <button
+              onClick={generateSummary}
+              disabled={generatingSummary}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-text-secondary hover:text-text transition-colors disabled:opacity-50"
+            >
+              {generatingSummary ? (
+                <>
+                  <RefreshCw size={13} className="animate-spin" />
+                  Genereren...
+                </>
+              ) : brief.ai_summary ? (
+                <>
+                  <RefreshCw size={13} />
+                  Opnieuw genereren
+                </>
+              ) : (
+                <>
+                  <Sparkles size={13} />
+                  Genereer samenvatting
+                </>
+              )}
+            </button>
+          )}
+        </div>
+        {summaryError && (
+          <p className="text-sm text-[#ef4444] mb-3">{summaryError}</p>
+        )}
+        {brief.ai_summary ? (
+          <div>
+            <div className="text-sm text-text whitespace-pre-wrap leading-relaxed prose-sm">
+              {brief.ai_summary}
+            </div>
+            {brief.ai_summary_generated_at && (
+              <p className="text-xs text-text-muted mt-3">
+                Gegenereerd op{" "}
+                {new Date(brief.ai_summary_generated_at).toLocaleString("nl-NL")}
+              </p>
+            )}
+          </div>
+        ) : (
+          <p className="text-sm text-text-muted italic">
+            {brief.status === "draft"
+              ? "Samenvatting beschikbaar na indiening van de intake."
+              : "Nog geen samenvatting gegenereerd."}
+          </p>
         )}
       </div>
 
