@@ -17,6 +17,8 @@ export interface InvoiceRow {
   mollie_payment_link_id: string | null;
   paid_at: string | null;
   payment_method: string | null;
+  moneybird_invoice_id: string | null;
+  line_items: { description: string; quantity: number; price_cents: number }[];
 }
 
 export const statusLabels: Record<InvoiceStatus, string> = {

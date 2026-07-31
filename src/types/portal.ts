@@ -28,6 +28,10 @@ export interface Client {
   notes: string | null;
   created_at: string;
   updated_at: string;
+  moneybird_contact_id: string | null;
+  kvk_number: string | null;
+  vat_number: string | null;
+  billing_email: string | null;
 }
 
 export interface ClientMembership {
@@ -156,6 +160,9 @@ export interface DiscoveryBrief {
   brand_notes: string | null;
   // Extra
   additional_notes: string | null;
+  // AI Summary
+  ai_summary: string | null;
+  ai_summary_generated_at: string | null;
   // Meta
   questionnaire_version: number;
   current_step: number;

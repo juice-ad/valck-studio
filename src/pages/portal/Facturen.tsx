@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { CreditCard, CheckCircle } from "lucide-react";
+import { CreditCard, CheckCircle, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { useActiveClient } from "@/contexts/ClientContext";
@@ -33,6 +33,43 @@ export function Facturen() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [downloadingPdf, setDownloadingPdf] = useState<string | null>(null);
+
+  async function handleDownloadPdf(invoice: Invoice) {
+    setDownloadingPdf(invoice.id);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Niet ingelogd");
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-invoice-pdf?invoiceId=${invoice.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        }
+      );
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Fout bij downloaden PDF");
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Factuur-${invoice.number}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setDownloadingPdf(null);
+    }
+  }
 
   useEffect(() => {
     if (!activeClientId) return;
@@ -127,24 +164,37 @@ export function Facturen() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      {inv.status === "betaald" ? (
-                        <span className="inline-flex items-center gap-1 text-xs text-green">
-                          <CheckCircle size={14} /> Betaald
-                        </span>
-                      ) : inv.mollie_payment_link_url ? (
-                        <Button
-                          size="sm"
-                          asChild
-                        >
-                          <a
-                            href={inv.mollie_payment_link_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                      <div className="flex items-center gap-2">
+                        {inv.moneybird_invoice_id && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDownloadPdf(inv)}
+                            disabled={downloadingPdf === inv.id}
                           >
-                            <CreditCard size={14} /> Betaal nu
-                          </a>
-                        </Button>
-                      ) : null}
+                            <FileDown size={14} />
+                            {downloadingPdf === inv.id ? "..." : "PDF"}
+                          </Button>
+                        )}
+                        {inv.status === "betaald" ? (
+                          <span className="inline-flex items-center gap-1 text-xs text-green">
+                            <CheckCircle size={14} /> Betaald
+                          </span>
+                        ) : inv.mollie_payment_link_url ? (
+                          <Button
+                            size="sm"
+                            asChild
+                          >
+                            <a
+                              href={inv.mollie_payment_link_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <CreditCard size={14} /> Betaal nu
+                            </a>
+                          </Button>
+                        ) : null}
+                      </div>
                     </td>
                   </tr>
                 ))}
