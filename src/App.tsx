@@ -18,6 +18,7 @@ import { ReviewDetail } from "@/pages/portal/ReviewDetail";
 import { Berichten } from "@/pages/portal/Berichten";
 import { Documenten } from "@/pages/portal/Documenten";
 import { Facturen } from "@/pages/portal/Facturen";
+import { Instellingen } from "@/pages/portal/Instellingen";
 import { Discovery } from "@/pages/portal/Discovery";
 import { AdminDashboard } from "@/pages/admin/AdminDashboard";
 import { AdminClients } from "@/pages/admin/AdminClients";
@@ -30,6 +31,7 @@ import { AdminBriefDetail } from "@/pages/admin/AdminBriefDetail";
 import { AdminBerichten } from "@/pages/admin/AdminBerichten";
 import { AdminDocumenten } from "@/pages/admin/AdminDocumenten";
 import { AdminFacturen } from "@/pages/admin/AdminFacturen";
+import { AdminInstellingen } from "@/pages/admin/AdminInstellingen";
 
 function App() {
   return (
@@ -93,6 +95,7 @@ function App() {
           <Route path="/portal/berichten" element={<Berichten />} />
           <Route path="/portal/documenten" element={<Documenten />} />
           <Route path="/portal/facturen" element={<Facturen />} />
+          <Route path="/portal/instellingen" element={<Instellingen />} />
         </Route>
       </Route>
       {/* Admin (beveiligd, alleen admin role) */}
@@ -109,6 +112,7 @@ function App() {
           <Route path="/admin/berichten" element={<AdminBerichten />} />
           <Route path="/admin/documenten" element={<AdminDocumenten />} />
           <Route path="/admin/facturen" element={<AdminFacturen />} />
+          <Route path="/admin/instellingen" element={<AdminInstellingen />} />
         </Route>
       </Route>
     </Routes>
