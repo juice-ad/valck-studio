@@ -14,6 +14,8 @@ import { OrgPicker } from "@/pages/portal/OrgPicker";
 import { Dashboard } from "@/pages/portal/Dashboard";
 import { Traject } from "@/pages/portal/Traject";
 import { IntakeHub } from "@/pages/portal/IntakeHub";
+import { Meetings } from "@/pages/portal/Meetings";
+import { AdminMeetings } from "@/pages/admin/AdminMeetings";
 import { Projecten } from "@/pages/portal/Projecten";
 import { ProjectDetail } from "@/pages/portal/ProjectDetail";
 import { ReviewDetail } from "@/pages/portal/ReviewDetail";
@@ -90,6 +92,7 @@ function App() {
           <Route path="/portal/traject" element={<Traject />} />
           <Route path="/portal/dashboard" element={<Dashboard />} />
           <Route path="/portal/intake" element={<IntakeHub />} />
+          <Route path="/portal/meetings" element={<Meetings />} />
           <Route path="/portal/discovery" element={<Discovery />} />
           <Route path="/portal/projecten" element={<Projecten />} />
           <Route path="/portal/projecten/:id" element={<ProjectDetail />} />
@@ -117,6 +120,7 @@ function App() {
           <Route path="/admin/berichten" element={<AdminBerichten />} />
           <Route path="/admin/documenten" element={<AdminDocumenten />} />
           <Route path="/admin/facturen" element={<AdminFacturen />} />
+          <Route path="/admin/afspraken" element={<AdminMeetings />} />
           <Route path="/admin/instellingen" element={<AdminInstellingen />} />
           <Route path="/admin/bibliotheek" element={<AdminLibrary />} />
         </Route>

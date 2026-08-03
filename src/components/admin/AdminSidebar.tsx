@@ -9,6 +9,7 @@ import {
   Receipt,
   FileText,
   Library,
+  CalendarClock,
   LogOut,
   Settings,
   ChevronsUpDown,
@@ -51,6 +52,7 @@ const navSections = [
     label: "Financieel",
     items: [
       { label: "Facturen", to: "/admin/facturen", icon: Receipt },
+      { label: "Afspraken", to: "/admin/afspraken", icon: CalendarClock },
       { label: "Documenten", to: "/admin/documenten", icon: FileText },
     ],
   },
