@@ -31,6 +31,7 @@ interface MolliePayment {
   id: string;
   status: "open" | "canceled" | "pending" | "authorized" | "expired" | "failed" | "paid";
   amount: { currency: string; value: string };
+  description: string | null;
   method: string | null;
   paidAt: string | null;
   _links: {

@@ -48,27 +48,39 @@ Deno.serve(async (req) => {
     let invoiceId = invoice?.id;
 
     if (!invoiceId) {
-      // Try to match via description (format: "Factuur VS-2026-XXX — Company")
-      // This is a fallback — primary match is via mollie_payment_id
-      console.log(`No invoice found for payment ${paymentId}, checking payment link...`);
+      // Fallback: payments uit een payment link hebben nog geen mollie_payment_id.
+      // Match dan op het factuurnummer uit de payment description
+      // (format: "Factuur VS-2026-001 — Bedrijfsnaam") en verifieer het bedrag.
+      // Nooit blind een open factuur kiezen.
+      const numberMatch = payment.description?.match(/VS-\d{4}-\d{3,}/);
 
-      // Store the payment ID for future reference
-      // The create-payment function stores the payment link ID, not the payment ID
-      // So we need to update when we first see a payment from a link
-      const { data: linkInvoice } = await supabase
-        .from("invoices")
-        .select("id, status")
-        .not("mollie_payment_link_id", "is", null)
-        .is("mollie_payment_id", null)
-        .limit(1);
-
-      if (linkInvoice && linkInvoice.length > 0) {
-        // Update with the actual payment ID
-        invoiceId = linkInvoice[0].id;
-        await supabase
+      if (!numberMatch) {
+        console.log(`Payment ${paymentId} has no invoice number in description, skipping`);
+      } else {
+        const { data: byNumber } = await supabase
           .from("invoices")
-          .update({ mollie_payment_id: paymentId })
-          .eq("id", invoiceId);
+          .select("id, status, amount_cents")
+          .eq("number", numberMatch[0])
+          .single();
+
+        if (!byNumber) {
+          console.log(`No invoice with number ${numberMatch[0]} for payment ${paymentId}`);
+        } else {
+          const expectedAmount = (byNumber.amount_cents / 100).toFixed(2);
+
+          if (payment.amount?.value !== expectedAmount) {
+            console.error(
+              `Amount mismatch for payment ${paymentId} on invoice ${numberMatch[0]}: ` +
+                `expected ${expectedAmount}, got ${payment.amount?.value}. Not touching invoice.`
+            );
+          } else {
+            invoiceId = byNumber.id;
+            await supabase
+              .from("invoices")
+              .update({ mollie_payment_id: paymentId })
+              .eq("id", invoiceId);
+          }
+        }
       }
     }
 
