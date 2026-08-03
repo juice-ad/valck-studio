@@ -1,25 +1,70 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, CheckCircle2, Sparkles, RefreshCw } from "lucide-react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { ArrowLeft, CheckCircle2, Sparkles, RefreshCw, FileText, Plus, Rocket } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import type { DiscoveryBrief } from "@/types/portal";
+import type { DiscoveryBrief, BriefTranscript } from "@/types/portal";
 import { featureCategories } from "@/lib/discovery-features";
+import { createProjectFromBrief } from "@/lib/journey";
 
 export function AdminBriefDetail() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [brief, setBrief] = useState<DiscoveryBrief | null>(null);
+  const [transcripts, setTranscripts] = useState<BriefTranscript[]>([]);
+  const [existingProjectId, setExistingProjectId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [marking, setMarking] = useState(false);
+  const [creatingProject, setCreatingProject] = useState(false);
   const [generatingSummary, setGeneratingSummary] = useState(false);
   const [summaryError, setSummaryError] = useState<string | null>(null);
+  const [showAddTranscript, setShowAddTranscript] = useState(false);
+  const [tForm, setTForm] = useState({ title: "", kind: "transcript", body: "", meeting_date: "" });
 
   useEffect(() => {
     if (!id) return;
-    supabase.from("discovery_briefs").select("*").eq("id", id).single().then(({ data }) => {
-      setBrief(data as DiscoveryBrief | null);
+    async function load() {
+      const [briefRes, transRes] = await Promise.all([
+        supabase.from("discovery_briefs").select("*").eq("id", id!).single(),
+        supabase.from("brief_transcripts").select("*").eq("brief_id", id!).order("sort_order"),
+      ]);
+      const b = briefRes.data as DiscoveryBrief | null;
+      setBrief(b);
+      setTranscripts((transRes.data as BriefTranscript[]) ?? []);
+      if (b) {
+        const { data: proj } = await supabase
+          .from("projects").select("id").eq("brief_id", b.id).limit(1);
+        setExistingProjectId((proj?.[0]?.id as string) ?? null);
+      }
       setLoading(false);
-    });
+    }
+    load();
   }, [id]);
+
+  async function handleCreateProject() {
+    if (!brief) return;
+    setCreatingProject(true);
+    const projectId = await createProjectFromBrief(brief);
+    setCreatingProject(false);
+    if (projectId) {
+      navigate(`/admin/projecten/${projectId}`);
+    }
+  }
+
+  async function addTranscript() {
+    if (!brief || !tForm.title.trim() || !tForm.body.trim()) return;
+    const { data } = await supabase.from("brief_transcripts").insert({
+      brief_id: brief.id,
+      client_id: brief.client_id,
+      title: tForm.title.trim(),
+      kind: tForm.kind,
+      body: tForm.body.trim(),
+      sort_order: transcripts.length,
+      meeting_date: tForm.meeting_date || null,
+    }).select("*").single();
+    if (data) setTranscripts((prev) => [...prev, data as BriefTranscript]);
+    setTForm({ title: "", kind: "transcript", body: "", meeting_date: "" });
+    setShowAddTranscript(false);
+  }
 
   async function markReviewed() {
     if (!id) return;
@@ -109,16 +154,35 @@ export function AdminBriefDetail() {
             )}
           </div>
         </div>
-        {brief.status === "submitted" && (
-          <button
-            onClick={markReviewed}
-            disabled={marking}
-            className="inline-flex items-center gap-2 bg-green text-white rounded-[8px] px-4 py-2.5 text-sm font-semibold hover:bg-[#0d9668] transition-colors disabled:opacity-50"
-          >
-            <CheckCircle2 size={16} />
-            {marking ? "Bezig..." : "Markeer als beoordeeld"}
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {existingProjectId ? (
+            <Link
+              to={`/admin/projecten/${existingProjectId}`}
+              className="inline-flex items-center gap-2 bg-text text-white rounded-[8px] px-4 py-2.5 text-sm font-semibold no-underline hover:opacity-90 transition-opacity"
+            >
+              <Rocket size={16} /> Bekijk project
+            </Link>
+          ) : (
+            <button
+              onClick={handleCreateProject}
+              disabled={creatingProject}
+              className="inline-flex items-center gap-2 bg-text text-white rounded-[8px] px-4 py-2.5 text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              <Rocket size={16} />
+              {creatingProject ? "Bezig..." : "Maak project van deze intake"}
+            </button>
+          )}
+          {brief.status === "submitted" && (
+            <button
+              onClick={markReviewed}
+              disabled={marking}
+              className="inline-flex items-center gap-2 bg-green text-white rounded-[8px] px-4 py-2.5 text-sm font-semibold hover:bg-[#0d9668] transition-colors disabled:opacity-50"
+            >
+              <CheckCircle2 size={16} />
+              {marking ? "Bezig..." : "Markeer als beoordeeld"}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* AI Summary */}
@@ -174,6 +238,86 @@ export function AdminBriefDetail() {
               ? "Samenvatting beschikbaar na indiening van de intake."
               : "Nog geen samenvatting gegenereerd."}
           </p>
+        )}
+      </div>
+
+      {/* Transcripts / context */}
+      <div className="rounded-[12px] bg-bg-white border border-border-light p-6 mb-4">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-semibold text-text flex items-center gap-2">
+            <FileText size={14} /> Gesprekken & context ({transcripts.length})
+          </h2>
+          <button
+            onClick={() => setShowAddTranscript((s) => !s)}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-text-secondary hover:text-text transition-colors"
+          >
+            <Plus size={13} /> Toevoegen
+          </button>
+        </div>
+
+        {showAddTranscript && (
+          <div className="mb-4 p-4 rounded-[8px] bg-bg border border-border-light flex flex-col gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <input
+                placeholder="Titel (bijv. Gesprek 30 juli, deel 1)"
+                value={tForm.title}
+                onChange={(e) => setTForm({ ...tForm, title: e.target.value })}
+                className="sm:col-span-2 rounded-[8px] border border-border-light bg-bg-white px-3 py-2 text-sm"
+              />
+              <select
+                value={tForm.kind}
+                onChange={(e) => setTForm({ ...tForm, kind: e.target.value })}
+                className="rounded-[8px] border border-border-light bg-bg-white px-3 py-2 text-sm"
+              >
+                <option value="transcript">Transcript</option>
+                <option value="summary">Samenvatting</option>
+              </select>
+            </div>
+            <textarea
+              placeholder="Plak hier het transcript of de samenvatting…"
+              rows={5}
+              value={tForm.body}
+              onChange={(e) => setTForm({ ...tForm, body: e.target.value })}
+              className="rounded-[8px] border border-border-light bg-bg-white px-3 py-2 text-sm"
+            />
+            <div className="flex items-center gap-3">
+              <input
+                type="date"
+                value={tForm.meeting_date}
+                onChange={(e) => setTForm({ ...tForm, meeting_date: e.target.value })}
+                className="rounded-[8px] border border-border-light bg-bg-white px-3 py-2 text-sm"
+              />
+              <button
+                onClick={addTranscript}
+                className="bg-text text-white rounded-[8px] px-4 py-2 text-sm font-semibold"
+              >
+                Opslaan
+              </button>
+            </div>
+          </div>
+        )}
+
+        {transcripts.length === 0 ? (
+          <p className="text-sm text-text-muted italic">
+            Nog geen transcripts. Plak de gespreksopnames zodat de context achter de intake bewaard blijft.
+          </p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {transcripts.map((t) => (
+              <details key={t.id} className="group rounded-[8px] border border-border-light bg-bg">
+                <summary className="cursor-pointer list-none px-4 py-3 flex items-center justify-between">
+                  <span className="text-sm font-medium text-text">{t.title}</span>
+                  <span className="text-xs text-text-muted">
+                    {t.kind === "summary" ? "Samenvatting" : "Transcript"}
+                    {t.meeting_date && ` · ${new Date(t.meeting_date).toLocaleDateString("nl-NL")}`}
+                  </span>
+                </summary>
+                <div className="px-4 pb-4 text-sm text-text whitespace-pre-wrap leading-relaxed border-t border-border-light pt-3">
+                  {t.body}
+                </div>
+              </details>
+            ))}
+          </div>
         )}
       </div>
 

@@ -13,6 +13,7 @@ import { Signup } from "@/pages/portal/Signup";
 import { OrgPicker } from "@/pages/portal/OrgPicker";
 import { Dashboard } from "@/pages/portal/Dashboard";
 import { Traject } from "@/pages/portal/Traject";
+import { IntakeHub } from "@/pages/portal/IntakeHub";
 import { Projecten } from "@/pages/portal/Projecten";
 import { ProjectDetail } from "@/pages/portal/ProjectDetail";
 import { ReviewDetail } from "@/pages/portal/ReviewDetail";
@@ -88,6 +89,7 @@ function App() {
           <Route path="/portal/select-org" element={<OrgPicker />} />
           <Route path="/portal/traject" element={<Traject />} />
           <Route path="/portal/dashboard" element={<Dashboard />} />
+          <Route path="/portal/intake" element={<IntakeHub />} />
           <Route path="/portal/discovery" element={<Discovery />} />
           <Route path="/portal/projecten" element={<Projecten />} />
           <Route path="/portal/projecten/:id" element={<ProjectDetail />} />

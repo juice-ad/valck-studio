@@ -28,7 +28,7 @@ import {
 const navItems = [
   { label: "Jouw traject", to: "/portal/traject", icon: RouteIcon },
   { label: "Dashboard", to: "/portal/dashboard", icon: LayoutDashboard },
-  { label: "Intake", to: "/portal/discovery", icon: Sparkles },
+  { label: "Intake", to: "/portal/intake", icon: Sparkles },
   { label: "Projecten", to: "/portal/projecten", icon: FolderKanban, hasNotification: true },
   { label: "Berichten", to: "/portal/berichten", icon: MessageCircle },
   { label: "Documenten", to: "/portal/documenten", icon: FileText },
