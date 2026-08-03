@@ -12,6 +12,7 @@ export interface Profile {
   role: UserRole;
   is_admin: boolean;
   linked_client_id: string | null;
+  onboarded_at: string | null;
   created_at: string;
 }
 

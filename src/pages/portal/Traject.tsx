@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useActiveClient } from "@/contexts/ClientContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { WelcomeOverlay } from "@/components/portal/WelcomeOverlay";
 import type {
   Project,
   ProjectPhase,
@@ -44,6 +46,8 @@ interface TimelineItem {
 
 export function Traject() {
   const { activeClientId } = useActiveClient();
+  const { profile } = useAuth();
+  const [showWelcome, setShowWelcome] = useState(false);
   const [project, setProject] = useState<Project | null>(null);
   const [steps, setSteps] = useState<WorkflowStep[]>([]);
   const [reviews, setReviews] = useState<ReviewRound[]>([]);
@@ -79,6 +83,12 @@ export function Traject() {
     }
     load();
   }, [activeClientId]);
+
+  useEffect(() => {
+    if (profile && profile.role === "client" && !profile.onboarded_at) {
+      setShowWelcome(true);
+    }
+  }, [profile]);
 
   const timeline = useMemo<TimelineItem[]>(() => {
     if (!project) return [];
@@ -156,6 +166,7 @@ export function Traject() {
   if (!project) {
     return (
       <div>
+        {showWelcome && <WelcomeOverlay onDone={() => setShowWelcome(false)} />}
         <h1 className="text-2xl font-bold text-text mb-2">Jouw traject</h1>
         <div className="rounded-[12px] bg-bg-white border border-border-light p-8 text-center mt-6">
           <Sparkles className="mx-auto mb-3 text-text-muted" size={28} />
@@ -176,6 +187,7 @@ export function Traject() {
 
   return (
     <div className="max-w-3xl">
+      {showWelcome && <WelcomeOverlay onDone={() => setShowWelcome(false)} />}
       <h1 className="text-2xl font-bold text-text mb-1">Jouw traject</h1>
       <p className="text-text-secondary mb-6">{project.title}</p>
 
