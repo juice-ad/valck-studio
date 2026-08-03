@@ -7,6 +7,7 @@ import {
   FileText,
   Receipt,
   Sparkles,
+  Route as RouteIcon,
   LogOut,
   Settings,
   ChevronsUpDown,
@@ -25,6 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const navItems = [
+  { label: "Jouw traject", to: "/portal/traject", icon: RouteIcon },
   { label: "Dashboard", to: "/portal/dashboard", icon: LayoutDashboard },
   { label: "Intake", to: "/portal/discovery", icon: Sparkles },
   { label: "Projecten", to: "/portal/projecten", icon: FolderKanban, hasNotification: true },

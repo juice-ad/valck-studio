@@ -12,6 +12,7 @@ import { Login } from "@/pages/portal/Login";
 import { Signup } from "@/pages/portal/Signup";
 import { OrgPicker } from "@/pages/portal/OrgPicker";
 import { Dashboard } from "@/pages/portal/Dashboard";
+import { Traject } from "@/pages/portal/Traject";
 import { Projecten } from "@/pages/portal/Projecten";
 import { ProjectDetail } from "@/pages/portal/ProjectDetail";
 import { ReviewDetail } from "@/pages/portal/ReviewDetail";
@@ -85,6 +86,7 @@ function App() {
       <Route element={<PortalLayout />}>
         <Route element={<ProtectedRoute allowedRoles={["client"]} />}>
           <Route path="/portal/select-org" element={<OrgPicker />} />
+          <Route path="/portal/traject" element={<Traject />} />
           <Route path="/portal/dashboard" element={<Dashboard />} />
           <Route path="/portal/discovery" element={<Discovery />} />
           <Route path="/portal/projecten" element={<Projecten />} />

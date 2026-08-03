@@ -60,6 +60,91 @@ export interface Project {
   start_date: string | null;
   vercel_project_id: string | null;
   live_url: string | null;
+  brief_id: string | null;
+  created_at: string;
+}
+
+// --- Workflow steps (de ruggengraat van "Jouw traject") ---
+
+export type WorkflowStepCategory =
+  | "intake"
+  | "build"
+  | "integrate"
+  | "train"
+  | "scale";
+
+export type WorkflowStepStatus =
+  | "pending"
+  | "in_progress"
+  | "completed"
+  | "blocked";
+
+export interface WorkflowStep {
+  id: string;
+  project_id: string;
+  client_id: string;
+  title: string;
+  description: string | null;
+  category: WorkflowStepCategory;
+  sequence_order: number;
+  status: WorkflowStepStatus;
+  owner: "client" | "studio";
+  due_date: string | null;
+  completion_notes: string | null;
+  completed_at: string | null;
+  created_at: string;
+}
+
+// --- Notifications ---
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  client_id: string | null;
+  type: string;
+  title: string;
+  body: string | null;
+  link: string | null;
+  read_at: string | null;
+  created_at: string;
+}
+
+// --- Meetings ---
+
+export type MeetingType = "intake" | "roadmap" | "meeloopdag" | "review";
+export type MeetingStatus =
+  | "planned"
+  | "completed"
+  | "reschedule_requested"
+  | "cancelled";
+
+export interface Meeting {
+  id: string;
+  project_id: string | null;
+  client_id: string;
+  brief_id: string | null;
+  title: string;
+  type: MeetingType;
+  scheduled_at: string;
+  duration_min: number | null;
+  status: MeetingStatus;
+  notes: string | null;
+  outcome: string | null;
+  meet_url: string | null;
+  created_at: string;
+}
+
+// --- Brief transcripts (context achter de intake) ---
+
+export interface BriefTranscript {
+  id: string;
+  brief_id: string;
+  client_id: string;
+  title: string;
+  kind: "transcript" | "summary";
+  body: string;
+  sort_order: number;
+  meeting_date: string | null;
   created_at: string;
 }
 
@@ -184,6 +269,8 @@ export interface ReviewRound {
   deployment_url: string;
   focus_areas: string[];
   status: ReviewRoundStatus;
+  start_date: string | null;
+  due_date: string | null;
   notified_at: string | null;
   opened_at: string | null;
   completed_at: string | null;
@@ -222,5 +309,7 @@ export interface PreviewFeedback {
   category: FeedbackCategory | null;
   screenshot_url: string | null;
   status: FeedbackStatus;
+  admin_response: string | null;
+  responded_at: string | null;
   created_at: string;
 }
