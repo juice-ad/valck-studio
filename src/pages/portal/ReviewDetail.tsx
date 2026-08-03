@@ -7,6 +7,7 @@ import {
   Loader2,
   Star,
   CheckCircle2,
+  MessageSquare,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { supabase } from "@/lib/supabase";
@@ -361,6 +362,15 @@ export function ReviewDetail() {
                     minute: "2-digit",
                   })}
                 </p>
+                {fb.admin_response && (
+                  <div className="mt-2 flex items-start gap-2 p-2.5 rounded-[8px] bg-blue-bg">
+                    <MessageSquare size={14} className="text-blue mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-xs font-semibold text-blue mb-0.5">Studio</p>
+                      <p className="text-sm text-text">{fb.admin_response}</p>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
