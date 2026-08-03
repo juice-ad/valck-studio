@@ -1,0 +1,7 @@
+project_id = "hbowpaixqgxnfbdftzel"
+
+# Mollie belt de webhook zonder Authorization-header; echtheid wordt in de
+# functie zelf geverifieerd door de payment bij Mollie op te halen met onze
+# API-key. JWT-verificatie moet hier dus uit staan.
+[functions.mollie-webhook]
+verify_jwt = false
