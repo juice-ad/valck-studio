@@ -65,7 +65,7 @@ export async function createProjectFromBrief(
     type: "project_created",
     title: "Jullie traject is gestart",
     body: "We hebben jullie project aangemaakt. Bekijk de eerste stappen in Jouw traject.",
-    link: "/portal/traject",
+    link: "/portal/overzicht",
   });
 
   return project.id;

@@ -4,11 +4,7 @@ import {
   LayoutDashboard,
   FolderKanban,
   MessageCircle,
-  FileText,
   Receipt,
-  Sparkles,
-  Route as RouteIcon,
-  Calendar,
   LogOut,
   Settings,
   ChevronsUpDown,
@@ -26,14 +22,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const navItems = [
-  { label: "Jouw traject", to: "/portal/traject", icon: RouteIcon },
-  { label: "Dashboard", to: "/portal/dashboard", icon: LayoutDashboard },
-  { label: "Intake", to: "/portal/intake", icon: Sparkles },
-  { label: "Projecten", to: "/portal/projecten", icon: FolderKanban, hasNotification: true },
-  { label: "Afspraken", to: "/portal/meetings", icon: Calendar },
+const navItems: {
+  label: string;
+  to: string;
+  icon: typeof LayoutDashboard;
+  hasNotification?: boolean;
+}[] = [
+  { label: "Overzicht", to: "/portal/overzicht", icon: LayoutDashboard, hasNotification: true },
+  { label: "Project", to: "/portal/project", icon: FolderKanban },
   { label: "Berichten", to: "/portal/berichten", icon: MessageCircle },
-  { label: "Documenten", to: "/portal/documenten", icon: FileText },
   { label: "Facturen", to: "/portal/facturen", icon: Receipt },
 ];
 

@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { PortalLayout } from "@/components/layout/PortalLayout";
 import { AdminLayout } from "@/components/layout/AdminLayout";
@@ -11,16 +11,13 @@ import { Integraties } from "@/pages/Integraties";
 import { Login } from "@/pages/portal/Login";
 import { Signup } from "@/pages/portal/Signup";
 import { OrgPicker } from "@/pages/portal/OrgPicker";
-import { Dashboard } from "@/pages/portal/Dashboard";
-import { Traject } from "@/pages/portal/Traject";
-import { IntakeHub } from "@/pages/portal/IntakeHub";
+import { Overzicht } from "@/pages/portal/Overzicht";
+import { ProjectRedirect } from "@/pages/portal/ProjectRedirect";
 import { Meetings } from "@/pages/portal/Meetings";
 import { AdminMeetings } from "@/pages/admin/AdminMeetings";
-import { Projecten } from "@/pages/portal/Projecten";
 import { ProjectDetail } from "@/pages/portal/ProjectDetail";
 import { ReviewDetail } from "@/pages/portal/ReviewDetail";
 import { Berichten } from "@/pages/portal/Berichten";
-import { Documenten } from "@/pages/portal/Documenten";
 import { Facturen } from "@/pages/portal/Facturen";
 import { Instellingen } from "@/pages/portal/Instellingen";
 import { Discovery } from "@/pages/portal/Discovery";
@@ -89,21 +86,24 @@ function App() {
       <Route element={<PortalLayout />}>
         <Route element={<ProtectedRoute allowedRoles={["client"]} />}>
           <Route path="/portal/select-org" element={<OrgPicker />} />
-          <Route path="/portal/traject" element={<Traject />} />
-          <Route path="/portal/dashboard" element={<Dashboard />} />
-          <Route path="/portal/intake" element={<IntakeHub />} />
-          <Route path="/portal/meetings" element={<Meetings />} />
+          <Route path="/portal/overzicht" element={<Overzicht />} />
+          <Route path="/portal/project" element={<ProjectRedirect />} />
           <Route path="/portal/discovery" element={<Discovery />} />
-          <Route path="/portal/projecten" element={<Projecten />} />
           <Route path="/portal/projecten/:id" element={<ProjectDetail />} />
           <Route
             path="/portal/projecten/:id/review/:reviewId"
             element={<ReviewDetail />}
           />
+          <Route path="/portal/meetings" element={<Meetings />} />
           <Route path="/portal/berichten" element={<Berichten />} />
-          <Route path="/portal/documenten" element={<Documenten />} />
           <Route path="/portal/facturen" element={<Facturen />} />
           <Route path="/portal/instellingen" element={<Instellingen />} />
+          {/* Oude paden -> nieuwe structuur */}
+          <Route path="/portal/dashboard" element={<Navigate to="/portal/overzicht" replace />} />
+          <Route path="/portal/traject" element={<Navigate to="/portal/overzicht" replace />} />
+          <Route path="/portal/intake" element={<Navigate to="/portal/project" replace />} />
+          <Route path="/portal/projecten" element={<Navigate to="/portal/project" replace />} />
+          <Route path="/portal/documenten" element={<Navigate to="/portal/project" replace />} />
         </Route>
       </Route>
       {/* Admin (beveiligd, alleen admin role) */}

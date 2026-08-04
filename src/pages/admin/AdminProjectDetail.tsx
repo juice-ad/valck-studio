@@ -124,7 +124,7 @@ export function AdminProjectDetail() {
       type: "phase_change",
       title: `Jullie project is nu in de fase "${label}"`,
       body: phaseBlurb[phase],
-      link: "/portal/traject",
+      link: "/portal/overzicht",
     });
 
     setProject((prev) => prev ? { ...prev, phase } : prev);
@@ -179,7 +179,7 @@ export function AdminProjectDetail() {
         body: reviewForm.due_date
           ? `Bekijk de preview en geef feedback vóór ${new Date(reviewForm.due_date).toLocaleDateString("nl-NL")}.`
           : "Bekijk de preview en geef je feedback.",
-        link: "/portal/traject",
+        link: "/portal/overzicht",
       });
     }
 

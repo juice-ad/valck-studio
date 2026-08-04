@@ -96,7 +96,7 @@ export function AdminMeetings() {
       type: "meeting_completed",
       title: `Gesprek afgerond: ${m.title}`,
       body: outcome || undefined,
-      link: m.project_id ? "/portal/traject" : "/portal/meetings",
+      link: m.project_id ? "/portal/overzicht" : "/portal/meetings",
     });
 
     setCompleting(null);

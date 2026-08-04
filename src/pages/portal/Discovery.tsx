@@ -271,7 +271,7 @@ export function Discovery() {
       .eq("id", briefId);
 
     setSaving(false);
-    navigate("/portal/dashboard");
+    navigate("/portal/overzicht");
   }
 
   // Validation per step
