@@ -6,6 +6,8 @@ import {
   Send,
   Loader2,
   SkipForward,
+  CheckCircle2,
+  Sparkles,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { supabase } from "@/lib/supabase";
@@ -36,6 +38,9 @@ export function Discovery() {
   const [saving, setSaving] = useState(false);
   const [briefId, setBriefId] = useState<string | null>(null);
 
+  // Submitted/reviewed brief (read-only view)
+  const [submittedBrief, setSubmittedBrief] = useState<DiscoveryBrief | null>(null);
+
   // Form data — single object for all fields
   const [formData, setFormData] = useState<Partial<DiscoveryBrief>>({
     business_name: "",
@@ -52,11 +57,28 @@ export function Discovery() {
   // Debounce timer ref
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Load existing draft on mount
+  // Load existing brief on mount (draft or submitted/reviewed)
   useEffect(() => {
     if (!user || !activeClientId) return;
 
-    async function loadDraft() {
+    async function loadBrief() {
+      // First check for submitted/reviewed brief
+      const { data: submitted } = await supabase
+        .from("discovery_briefs")
+        .select("*")
+        .eq("client_id", activeClientId!)
+        .in("status", ["submitted", "reviewed"])
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (submitted) {
+        setSubmittedBrief(submitted as DiscoveryBrief);
+        setLoading(false);
+        return;
+      }
+
+      // Otherwise load draft
       const { data } = await supabase
         .from("discovery_briefs")
         .select("*")
@@ -78,7 +100,7 @@ export function Discovery() {
       setLoading(false);
     }
 
-    loadDraft();
+    loadBrief();
   }, [user, activeClientId]);
 
   // Build the data payload for saving
@@ -249,7 +271,7 @@ export function Discovery() {
       .eq("id", briefId);
 
     setSaving(false);
-    navigate("/portal/dashboard");
+    navigate("/portal/overzicht");
   }
 
   // Validation per step
@@ -268,6 +290,75 @@ export function Discovery() {
     return (
       <div className="flex justify-center py-12">
         <div className="w-5 h-5 rounded-full border-2 border-border border-t-text animate-spin" />
+      </div>
+    );
+  }
+
+  // Show submitted/reviewed brief with AI summary
+  if (submittedBrief) {
+    return (
+      <div>
+        <h1 className="text-2xl font-bold text-text mb-2">Intake</h1>
+        <p className="text-sm text-text-secondary mb-6">
+          Je intake is ingediend. We nemen je aanvraag door en komen snel bij je terug.
+        </p>
+
+        {/* Status */}
+        <div className="rounded-[12px] bg-bg-white border border-border-light p-6 mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-green-bg flex items-center justify-center">
+              <CheckCircle2 className="w-5 h-5 text-green" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-text">
+                Intake {submittedBrief.status === "reviewed" ? "beoordeeld" : "ingediend"}
+              </p>
+              <p className="text-xs text-text-muted">
+                {submittedBrief.submitted_at
+                  ? new Date(submittedBrief.submitted_at).toLocaleDateString("nl-NL", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })
+                  : ""}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* AI Summary */}
+        {submittedBrief.ai_summary && (
+          <div className="rounded-[12px] bg-bg-white border border-border-light p-6 mb-4">
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles size={16} className="text-text" />
+              <h2 className="text-sm font-semibold text-text">
+                Samenvatting van je intake
+              </h2>
+            </div>
+            <div className="text-sm text-text leading-relaxed whitespace-pre-wrap">
+              {submittedBrief.ai_summary}
+            </div>
+          </div>
+        )}
+
+        {/* Brief overview */}
+        <div className="rounded-[12px] bg-bg-white border border-border-light p-6">
+          <h2 className="text-sm font-semibold text-text mb-4">Je antwoorden</h2>
+          <div className="space-y-3 text-sm">
+            <ReadOnlyField label="Bedrijfsnaam" value={submittedBrief.business_name} />
+            <ReadOnlyField label="Beschrijving" value={submittedBrief.business_description} />
+            <ReadOnlyField label="Teamgrootte" value={submittedBrief.team_size} />
+            <ReadOnlyField label="Ambitie" value={submittedBrief.ambition} />
+            <ReadOnlyField label="Top frustraties" value={submittedBrief.top_frustrations} />
+            <ReadOnlyField label="Wat moet automatisch?" value={submittedBrief.should_be_automatic} />
+            <ReadOnlyField label="#1 prioriteit" value={submittedBrief.automation_priority} />
+            <ReadOnlyField label="Budget" value={submittedBrief.budget_range} />
+            <ReadOnlyField label="Tijdlijn" value={submittedBrief.desired_timeline} />
+            {submittedBrief.additional_notes && (
+              <ReadOnlyField label="Extra notities" value={submittedBrief.additional_notes} />
+            )}
+          </div>
+        </div>
       </div>
     );
   }
@@ -415,6 +506,16 @@ export function Discovery() {
           Opslaan...
         </p>
       )}
+    </div>
+  );
+}
+
+function ReadOnlyField({ label, value }: { label: string; value: string | null | undefined }) {
+  if (!value) return null;
+  return (
+    <div>
+      <p className="text-xs text-text-muted">{label}</p>
+      <p className="text-sm text-text whitespace-pre-wrap">{value}</p>
     </div>
   );
 }

@@ -4,21 +4,33 @@ import {
   LayoutDashboard,
   FolderKanban,
   MessageCircle,
-  FileText,
   Receipt,
-  Sparkles,
   LogOut,
+  Settings,
+  ChevronsUpDown,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useActiveClient } from "@/contexts/ClientContext";
 import { supabase } from "@/lib/supabase";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-const navItems = [
-  { label: "Dashboard", to: "/portal/dashboard", icon: LayoutDashboard },
-  { label: "Intake", to: "/portal/discovery", icon: Sparkles },
-  { label: "Projecten", to: "/portal/projecten", icon: FolderKanban, hasNotification: true },
+const navItems: {
+  label: string;
+  to: string;
+  icon: typeof LayoutDashboard;
+  hasNotification?: boolean;
+}[] = [
+  { label: "Overzicht", to: "/portal/overzicht", icon: LayoutDashboard, hasNotification: true },
+  { label: "Project", to: "/portal/project", icon: FolderKanban },
   { label: "Berichten", to: "/portal/berichten", icon: MessageCircle },
-  { label: "Documenten", to: "/portal/documenten", icon: FileText },
   { label: "Facturen", to: "/portal/facturen", icon: Receipt },
 ];
 
@@ -97,26 +109,44 @@ export function PortalSidebar({ onClose }: Props) {
         })}
       </nav>
 
-      {/* User footer */}
+      {/* User footer with dropdown */}
       <div className="px-3 py-4 border-t border-border-light">
-        <div className="flex items-center gap-3 px-3 mb-3">
-          <div className="w-8 h-8 rounded-full bg-text text-white text-xs font-semibold flex items-center justify-center shrink-0">
-            {initials}
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-text truncate">
-              {profile?.full_name || "Gebruiker"}
-            </p>
-            <p className="text-xs text-text-muted truncate">{user?.email}</p>
-          </div>
-        </div>
-        <button
-          onClick={signOut}
-          className="flex items-center gap-2 px-3 py-2 text-sm text-text-secondary hover:text-text rounded-[8px] hover:bg-accent-soft/50 transition-colors w-full"
-        >
-          <LogOut size={16} />
-          Uitloggen
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center gap-3 px-3 py-2 rounded-[8px] hover:bg-accent-soft/50 transition-colors w-full text-left">
+              <div className="w-8 h-8 rounded-full bg-text text-white text-xs font-semibold flex items-center justify-center shrink-0">
+                {initials}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-text truncate">
+                  {profile?.full_name || "Gebruiker"}
+                </p>
+                <p className="text-xs text-text-muted truncate">{user?.email}</p>
+              </div>
+              <ChevronsUpDown size={14} className="text-text-muted shrink-0" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="top" align="start" className="w-56">
+            <DropdownMenuLabel>
+              <span className="block text-sm font-medium">{profile?.full_name || "Gebruiker"}</span>
+              <span className="block text-xs font-normal text-muted-foreground">{user?.email}</span>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem asChild>
+                <Link to="/portal/instellingen">
+                  <Settings size={14} />
+                  Instellingen
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={signOut}>
+              <LogOut size={14} />
+              Uitloggen
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );

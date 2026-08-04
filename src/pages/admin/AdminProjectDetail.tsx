@@ -1,11 +1,19 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
-  ArrowLeft, Plus, Eye, CheckCircle2, Clock, Loader2, Send, Star,
+  ArrowLeft, Plus, Eye, CheckCircle2, Clock, Loader2, Send, Star, MessageSquare,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { AdminModal } from "@/components/admin/AdminModal";
+import { notifyClientMembers } from "@/lib/notifications";
 import type { Project, ProjectPhase, ReviewRound, PreviewFeedback, ProjectUpdate } from "@/types/portal";
+
+const phaseBlurb: Record<ProjectPhase, string> = {
+  discovery: "We leren jullie bedrijf kennen en bepalen de scope.",
+  build: "We bouwen de eerste module, elke week een klik-ronde.",
+  scale: "We zetten modules aan en optimaliseren.",
+  completed: "Het systeem draait en is van jullie.",
+};
 
 const phases: { key: ProjectPhase; label: string }[] = [
   { key: "discovery", label: "Discovery" },
@@ -41,8 +49,12 @@ export function AdminProjectDetail() {
 
   // New review round
   const [showReviewModal, setShowReviewModal] = useState(false);
-  const [reviewForm, setReviewForm] = useState({ title: "", week_number: "", deployment_url: "", description: "", focus_areas: "" });
+  const [reviewForm, setReviewForm] = useState({ title: "", week_number: "", deployment_url: "", description: "", focus_areas: "", start_date: "", due_date: "" });
   const [savingReview, setSavingReview] = useState(false);
+
+  // Feedback admin-antwoord
+  const [responseDrafts, setResponseDrafts] = useState<Record<string, string>>({});
+  const [savingResponse, setSavingResponse] = useState<string | null>(null);
 
   // New update
   const [updateTitle, setUpdateTitle] = useState("");
@@ -98,10 +110,46 @@ export function AdminProjectDetail() {
   }
 
   async function setPhase(phase: ProjectPhase) {
-    if (!id) return;
+    if (!id || !project || phase === project.phase) return;
     await supabase.from("projects").update({ phase }).eq("id", id);
+
+    const label = phases.find((p) => p.key === phase)?.label ?? phase;
+    // Auto-bericht op de tijdlijn + melding naar de klant
+    await supabase.from("project_updates").insert({
+      project_id: id,
+      title: `Nieuwe fase: ${label}`,
+      body: phaseBlurb[phase],
+    });
+    await notifyClientMembers(project.client_id, {
+      type: "phase_change",
+      title: `Jullie project is nu in de fase "${label}"`,
+      body: phaseBlurb[phase],
+      link: "/portal/overzicht",
+    });
+
     setProject((prev) => prev ? { ...prev, phase } : prev);
     setEditForm((prev) => ({ ...prev, phase }));
+    loadData();
+  }
+
+  async function saveResponse(fb: PreviewFeedback) {
+    const text = (responseDrafts[fb.id] ?? "").trim();
+    if (!text || !project) return;
+    setSavingResponse(fb.id);
+    await supabase.from("preview_feedback").update({
+      admin_response: text,
+      responded_at: new Date().toISOString(),
+      status: fb.status === "open" ? "acknowledged" : fb.status,
+    }).eq("id", fb.id);
+    await notifyClientMembers(project.client_id, {
+      type: "feedback_answered",
+      title: "De studio heeft op jullie feedback gereageerd",
+      body: text.slice(0, 120),
+      link: `/portal/projecten/${project.id}`,
+    });
+    setSavingResponse(null);
+    setResponseDrafts((prev) => ({ ...prev, [fb.id]: "" }));
+    loadData();
   }
 
   async function createReview(e: FormEvent) {
@@ -118,11 +166,25 @@ export function AdminProjectDetail() {
       deployment_url: reviewForm.deployment_url.trim(),
       description: reviewForm.description.trim() || null,
       focus_areas: focusAreas.length > 0 ? focusAreas : [],
+      start_date: reviewForm.start_date || null,
+      due_date: reviewForm.due_date || null,
       status: "pending",
+      notified_at: new Date().toISOString(),
     });
 
+    if (project) {
+      await notifyClientMembers(project.client_id, {
+        type: "review_created",
+        title: `Nieuwe klik-ronde: ${reviewForm.title.trim()}`,
+        body: reviewForm.due_date
+          ? `Bekijk de preview en geef feedback vóór ${new Date(reviewForm.due_date).toLocaleDateString("nl-NL")}.`
+          : "Bekijk de preview en geef je feedback.",
+        link: "/portal/overzicht",
+      });
+    }
+
     setShowReviewModal(false);
-    setReviewForm({ title: "", week_number: "", deployment_url: "", description: "", focus_areas: "" });
+    setReviewForm({ title: "", week_number: "", deployment_url: "", description: "", focus_areas: "", start_date: "", due_date: "" });
     setSavingReview(false);
     loadData();
   }
@@ -244,6 +306,7 @@ export function AdminProjectDetail() {
             </div>
           ))}
         </div>
+        <p className="text-xs text-text-muted mt-3">{phaseBlurb[project.phase]}</p>
       </div>
 
       {/* Review rounds */}
@@ -314,6 +377,28 @@ export function AdminProjectDetail() {
                                 <p className="text-xs text-text-muted mt-0.5">
                                   {new Date(fb.created_at).toLocaleString("nl-NL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                                 </p>
+                                {fb.admin_response ? (
+                                  <div className="mt-2 flex items-start gap-2 p-2 rounded-[6px] bg-blue-bg">
+                                    <MessageSquare size={13} className="text-blue mt-0.5 shrink-0" />
+                                    <p className="text-xs text-text">{fb.admin_response}</p>
+                                  </div>
+                                ) : (
+                                  <div className="mt-2 flex gap-2">
+                                    <input
+                                      value={responseDrafts[fb.id] ?? ""}
+                                      onChange={(e) => setResponseDrafts((prev) => ({ ...prev, [fb.id]: e.target.value }))}
+                                      placeholder="Reageer naar de klant…"
+                                      className="flex-1 text-xs rounded-[6px] border border-border-light bg-bg-white px-2 py-1.5 outline-none focus:border-text"
+                                    />
+                                    <button
+                                      onClick={() => saveResponse(fb)}
+                                      disabled={savingResponse === fb.id || !(responseDrafts[fb.id] ?? "").trim()}
+                                      className="text-xs font-semibold bg-text text-white rounded-[6px] px-2.5 py-1.5 disabled:opacity-40"
+                                    >
+                                      {savingResponse === fb.id ? "…" : "Stuur"}
+                                    </button>
+                                  </div>
+                                )}
                               </div>
                               <select
                                 value={fb.status}
@@ -393,6 +478,18 @@ export function AdminProjectDetail() {
               <label className="block text-sm font-medium text-text mb-1.5">Focus gebieden</label>
               <input value={reviewForm.focus_areas} onChange={(e) => setReviewForm({ ...reviewForm, focus_areas: e.target.value })}
                 placeholder="Navigatie, Mobiel, ..."
+                className="w-full rounded-[8px] border border-border-light bg-bg px-3 py-2.5 text-sm text-text outline-none focus:border-text transition-colors" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-text mb-1.5">Startdatum</label>
+              <input type="date" value={reviewForm.start_date} onChange={(e) => setReviewForm({ ...reviewForm, start_date: e.target.value })}
+                className="w-full rounded-[8px] border border-border-light bg-bg px-3 py-2.5 text-sm text-text outline-none focus:border-text transition-colors" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-text mb-1.5">Feedback vóór</label>
+              <input type="date" value={reviewForm.due_date} onChange={(e) => setReviewForm({ ...reviewForm, due_date: e.target.value })}
                 className="w-full rounded-[8px] border border-border-light bg-bg px-3 py-2.5 text-sm text-text outline-none focus:border-text transition-colors" />
             </div>
           </div>

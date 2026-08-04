@@ -1,7 +1,7 @@
 import { AnimatedSection } from "@/components/ui/AnimatedSection";
 
 const proofItems = [
-  { number: "5-10x", label: "sneller door AI-augmented dev" },
+  { number: "100%", label: "persoonlijke aanpak" },
   { number: "100%", label: "IP eigendom bij jou" },
   { number: "€0", label: "verborgen kosten" },
   { number: "EU", label: "GDPR-compliant hosting" },
