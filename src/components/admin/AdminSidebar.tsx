@@ -5,7 +5,6 @@ import {
   Sparkles,
   Building2,
   Users,
-  MessageCircle,
   Receipt,
   FileText,
   Library,
@@ -45,7 +44,6 @@ const navSections = [
     items: [
       { label: "Organisaties", to: "/admin/clients", icon: Building2 },
       { label: "Gebruikers", to: "/admin/users", icon: Users },
-      { label: "Berichten", to: "/admin/berichten", icon: MessageCircle },
     ],
   },
   {

@@ -11,13 +11,12 @@ import { Integraties } from "@/pages/Integraties";
 import { Login } from "@/pages/portal/Login";
 import { Signup } from "@/pages/portal/Signup";
 import { OrgPicker } from "@/pages/portal/OrgPicker";
-import { Overzicht } from "@/pages/portal/Overzicht";
 import { ProjectRedirect } from "@/pages/portal/ProjectRedirect";
 import { Meetings } from "@/pages/portal/Meetings";
 import { AdminMeetings } from "@/pages/admin/AdminMeetings";
 import { ProjectDetail } from "@/pages/portal/ProjectDetail";
+import { ModuleDetail } from "@/pages/portal/ModuleDetail";
 import { ReviewDetail } from "@/pages/portal/ReviewDetail";
-import { Berichten } from "@/pages/portal/Berichten";
 import { Facturen } from "@/pages/portal/Facturen";
 import { Instellingen } from "@/pages/portal/Instellingen";
 import { Discovery } from "@/pages/portal/Discovery";
@@ -29,7 +28,6 @@ import { AdminProjecten } from "@/pages/admin/AdminProjecten";
 import { AdminProjectDetail } from "@/pages/admin/AdminProjectDetail";
 import { AdminBriefs } from "@/pages/admin/AdminBriefs";
 import { AdminBriefDetail } from "@/pages/admin/AdminBriefDetail";
-import { AdminBerichten } from "@/pages/admin/AdminBerichten";
 import { AdminDocumenten } from "@/pages/admin/AdminDocumenten";
 import { AdminFacturen } from "@/pages/admin/AdminFacturen";
 import { AdminInstellingen } from "@/pages/admin/AdminInstellingen";
@@ -82,25 +80,29 @@ function App() {
       <Route path="/portal/login" element={<Login />} />
       <Route path="/portal/signup/:token" element={<Signup />} />
 
-      {/* Portal (beveiligd, alleen client role — admins gaan naar /admin) */}
+      {/* Portal (beveiligd, alleen client role - admins gaan naar /admin) */}
       <Route element={<PortalLayout />}>
         <Route element={<ProtectedRoute allowedRoles={["client"]} />}>
           <Route path="/portal/select-org" element={<OrgPicker />} />
-          <Route path="/portal/overzicht" element={<Overzicht />} />
           <Route path="/portal/project" element={<ProjectRedirect />} />
           <Route path="/portal/discovery" element={<Discovery />} />
           <Route path="/portal/projecten/:id" element={<ProjectDetail />} />
+          <Route
+            path="/portal/projecten/:id/modules/:moduleId"
+            element={<ModuleDetail />}
+          />
           <Route
             path="/portal/projecten/:id/review/:reviewId"
             element={<ReviewDetail />}
           />
           <Route path="/portal/meetings" element={<Meetings />} />
-          <Route path="/portal/berichten" element={<Berichten />} />
+          <Route path="/portal/berichten" element={<Navigate to="/portal/project" replace />} />
           <Route path="/portal/facturen" element={<Facturen />} />
           <Route path="/portal/instellingen" element={<Instellingen />} />
           {/* Oude paden -> nieuwe structuur */}
-          <Route path="/portal/dashboard" element={<Navigate to="/portal/overzicht" replace />} />
-          <Route path="/portal/traject" element={<Navigate to="/portal/overzicht" replace />} />
+          <Route path="/portal/overzicht" element={<Navigate to="/portal/project" replace />} />
+          <Route path="/portal/dashboard" element={<Navigate to="/portal/project" replace />} />
+          <Route path="/portal/traject" element={<Navigate to="/portal/project" replace />} />
           <Route path="/portal/intake" element={<Navigate to="/portal/project" replace />} />
           <Route path="/portal/projecten" element={<Navigate to="/portal/project" replace />} />
           <Route path="/portal/documenten" element={<Navigate to="/portal/project" replace />} />
@@ -117,7 +119,7 @@ function App() {
           <Route path="/admin/projecten/:id" element={<AdminProjectDetail />} />
           <Route path="/admin/briefs" element={<AdminBriefs />} />
           <Route path="/admin/briefs/:id" element={<AdminBriefDetail />} />
-          <Route path="/admin/berichten" element={<AdminBerichten />} />
+          <Route path="/admin/berichten" element={<Navigate to="/admin" replace />} />
           <Route path="/admin/documenten" element={<AdminDocumenten />} />
           <Route path="/admin/facturen" element={<AdminFacturen />} />
           <Route path="/admin/afspraken" element={<AdminMeetings />} />

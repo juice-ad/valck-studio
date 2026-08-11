@@ -1,6 +1,6 @@
 ## Context
 
-Valck Studio is a B2B platform studio app (React 19 + Tailwind v4 + shadcn/ui + Supabase) that manages the full client lifecycle: intake → build → delivery. The app currently has a functional discovery wizard, messaging, project tracking, and admin panel. However, the post-delivery phase is absent — there is no support system, no subscription management, and no way for clients to request features or track their live platform.
+Valck Studio is a B2B platform studio app (React 19 + Tailwind v4 + shadcn/ui + Supabase) that manages the full client lifecycle: intake → build → delivery. The app currently has a functional discovery wizard, messaging, project tracking, and admin panel. However, the post-delivery phase is absent - there is no support system, no subscription management, and no way for clients to request features or track their live platform.
 
 The existing codebase lives at `/Users/antoine/Desktop/12. CRM /04. valck studio /01. valck-studio/` with:
 - 12 admin pages, 12 portal pages, 8 discovery step components
@@ -23,8 +23,8 @@ The existing codebase lives at `/Users/antoine/Desktop/12. CRM /04. valck studio
 - Building a public-facing ticketing system (all access is invite-based)
 - Multi-tenant deployment (each client platform remains a separate project)
 - Automated platform provisioning (blueprint instantiation remains manual via Claude Code)
-- Payment processing (Mollie/Stripe) — invoicing is handled through Moneybird
-- Mobile app — the portal is web-only
+- Payment processing (Mollie/Stripe) - invoicing is handled through Moneybird
+- Mobile app - the portal is web-only
 - Dark mode
 
 ## Decisions
@@ -39,14 +39,14 @@ The existing codebase lives at `/Users/antoine/Desktop/12. CRM /04. valck studio
 ### D2: Supabase Realtime for chat upgrade
 **Decision:** Use Supabase Realtime `postgres_changes` on the messages table for live message delivery. Use Supabase Realtime Presence for typing indicators and online status.
 
-**Rationale:** The Supabase client is already installed and configured. Realtime is a built-in feature that requires no additional infrastructure. The existing messages table and RLS policies remain unchanged — Realtime respects RLS.
+**Rationale:** The Supabase client is already installed and configured. Realtime is a built-in feature that requires no additional infrastructure. The existing messages table and RLS policies remain unchanged - Realtime respects RLS.
 
 **Alternative considered:** Polling at short intervals. Rejected because it provides a worse UX and doesn't support typing indicators.
 
 ### D3: Moneybird integration via Edge Function with API token
 **Decision:** Use a personal API token (not OAuth2) for Moneybird integration. Edge Functions handle all Moneybird API calls server-side.
 
-**Rationale:** Valck Studio is a single-admin setup — Antoine is the only person who needs Moneybird access. A personal API token is simpler than OAuth2 (no auth flow, no token refresh logic). The token is stored as a Supabase Edge Function secret.
+**Rationale:** Valck Studio is a single-admin setup - Antoine is the only person who needs Moneybird access. A personal API token is simpler than OAuth2 (no auth flow, no token refresh logic). The token is stored as a Supabase Edge Function secret.
 
 **Alternative considered:** OAuth2 flow. Rejected as over-engineered for a single-admin use case.
 
@@ -55,19 +55,19 @@ The existing codebase lives at `/Users/antoine/Desktop/12. CRM /04. valck studio
 
 **Rationale:** The current 8-step wizard with auto-save works well. Rather than rebuilding with a dynamic question engine, we add conditional sub-sections within existing steps. For example, StepWorkflow shows crew-specific questions only if the business description mentions crew/personnel. This keeps the code simple and the UX smooth.
 
-**Alternative considered:** Fully dynamic question engine with questions defined in the database. Rejected because it adds unnecessary complexity — the intake doesn't change frequently enough to warrant a CMS-style approach. Code-defined branches are easier to maintain and test.
+**Alternative considered:** Fully dynamic question engine with questions defined in the database. Rejected because it adds unnecessary complexity - the intake doesn't change frequently enough to warrant a CMS-style approach. Code-defined branches are easier to maintain and test.
 
 ### D5: Platform registry as a simple lookup table
 **Decision:** A `platforms` table stores metadata about deployed client platforms (URL, accent color, modules list, status). This is manually maintained by admin, not auto-synced with Vercel.
 
 **Rationale:** Each client platform is a completely separate project (separate repo, separate Supabase, separate Vercel). There's no API to auto-detect deployment status across unrelated Vercel projects without complex Vercel API integration per project. Manual registration is sufficient for the current scale (< 10 clients).
 
-**Alternative considered:** Vercel API integration for auto-status. Rejected as premature — would require storing Vercel project IDs and team tokens per client, which adds security surface for minimal gain.
+**Alternative considered:** Vercel API integration for auto-status. Rejected as premature - would require storing Vercel project IDs and team tokens per client, which adds security surface for minimal gain.
 
 ### D6: Subscription tiers as admin-defined configuration
 **Decision:** Subscription tiers are defined in a `subscription_tiers` table (name, description, price_cents, features list). Each client gets a `subscriptions` record linking them to a tier with start/end dates. Tier changes are manual (admin action).
 
-**Rationale:** Pricing is still being established and may change per client. A simple table structure allows flexibility without building a full billing engine. Moneybird handles the actual invoicing — the subscription table is for tracking and display only.
+**Rationale:** Pricing is still being established and may change per client. A simple table structure allows flexibility without building a full billing engine. Moneybird handles the actual invoicing - the subscription table is for tracking and display only.
 
 ### D7: Real-time chat architecture
 **Decision:** Upgrade the existing project-based messaging to support both project threads and a general client channel. Add an `is_read` field and `read_at` timestamp per message. Typing indicators via Supabase Presence channels keyed by `client_id`.

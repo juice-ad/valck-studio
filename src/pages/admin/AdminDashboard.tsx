@@ -4,7 +4,6 @@ import {
   FolderKanban,
   Sparkles,
   Eye,
-  MessageCircle,
   Plus,
   UserPlus,
   Receipt,
@@ -53,7 +52,6 @@ export function AdminDashboard() {
   const [projectCount, setProjectCount] = useState(0);
   const [briefCount, setBriefCount] = useState(0);
   const [reviewCount, setReviewCount] = useState(0);
-  const [messageCount, setMessageCount] = useState(0);
   const [revenueThisMonth, setRevenueThisMonth] = useState(0);
   const [openInvoiceCount, setOpenInvoiceCount] = useState(0);
   const [recentBriefs, setRecentBriefs] = useState<RecentBrief[]>([]);
@@ -69,7 +67,6 @@ export function AdminDashboard() {
         projects,
         briefs,
         reviews,
-        messages,
         paidThisMonth,
         openInvoices,
         briefList,
@@ -88,10 +85,6 @@ export function AdminDashboard() {
           .from("review_rounds")
           .select("id", { count: "exact", head: true })
           .in("status", ["pending", "active"]),
-        supabase
-          .from("messages")
-          .select("id", { count: "exact", head: true })
-          .eq("is_from_studio", false),
         // Revenue this month (paid invoices)
         supabase
           .from("invoices")
@@ -129,7 +122,6 @@ export function AdminDashboard() {
       setProjectCount(projects.count ?? 0);
       setBriefCount(briefs.count ?? 0);
       setReviewCount(reviews.count ?? 0);
-      setMessageCount(messages.count ?? 0);
       setOpenInvoiceCount(openInvoices.count ?? 0);
 
       // Sum revenue
@@ -167,7 +159,6 @@ export function AdminDashboard() {
       {/* Activity KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <AdminStatCard label="Open reviews" value={reviewCount} icon={Eye} to="/admin/projecten" />
-        <AdminStatCard label="Klantberichten" value={messageCount} icon={MessageCircle} to="/admin/berichten" />
       </div>
 
       {/* Quick actions */}
@@ -192,7 +183,7 @@ export function AdminDashboard() {
         </Button>
       </div>
 
-      {/* Recent activity — 3 columns */}
+      {/* Recent activity - 3 columns */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent payments */}
         <div className="rounded-[12px] bg-bg-white border border-border-light p-6">
@@ -210,13 +201,13 @@ export function AdminDashboard() {
                 <div key={payment.id} className="flex items-center justify-between p-3 rounded-[8px] border border-border-light">
                   <div>
                     <p className="text-sm font-medium text-text">{payment.number}</p>
-                    <p className="text-xs text-text-muted">{payment.clients?.company_name ?? "—"}</p>
+                    <p className="text-xs text-text-muted">{payment.clients?.company_name ?? "-"}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-medium text-green">{formatCents(payment.amount_cents)}</p>
                     <p className="text-xs text-text-muted flex items-center gap-1 justify-end">
                       <Clock size={10} />
-                      {payment.paid_at ? new Date(payment.paid_at).toLocaleDateString("nl-NL") : "—"}
+                      {payment.paid_at ? new Date(payment.paid_at).toLocaleDateString("nl-NL") : "-"}
                     </p>
                   </div>
                 </div>
@@ -245,7 +236,7 @@ export function AdminDashboard() {
                 >
                   <div>
                     <p className="text-sm font-medium text-text">{brief.business_name}</p>
-                    <p className="text-xs text-text-muted">{brief.clients?.company_name ?? "—"}</p>
+                    <p className="text-xs text-text-muted">{brief.clients?.company_name ?? "-"}</p>
                   </div>
                   <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
                     brief.status === "submitted" ? "bg-blue-bg text-blue" : "bg-green-bg text-green"

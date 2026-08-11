@@ -6,6 +6,49 @@ import type { DiscoveryBrief, BriefTranscript } from "@/types/portal";
 import { featureCategories } from "@/lib/discovery-features";
 import { createProjectFromBrief } from "@/lib/journey";
 
+// Alle bewerkbare tekstvelden van de intake, per sectie. De admin kan deze
+// óók na indienen aanpassen - de intake is de enige klant-invoer, maar de
+// admin blijft de bron van waarheid.
+type BriefFieldKey = Exclude<keyof DiscoveryBrief,
+  "id" | "client_id" | "selected_features" | "inspiration_urls" | "ai_summary" | "ai_summary_generated_at"
+  | "questionnaire_version" | "current_step" | "status" | "created_at" | "submitted_at">;
+const BRIEF_SECTIONS: { title: string; fields: { key: BriefFieldKey; label: string; long?: boolean }[] }[] = [
+  { title: "Bedrijf", fields: [
+    { key: "business_name", label: "Bedrijfsnaam" },
+    { key: "business_description", label: "Beschrijving", long: true },
+    { key: "website_url", label: "Website" },
+    { key: "industry", label: "Branche" },
+    { key: "team_size", label: "Teamgrootte" },
+    { key: "annual_revenue", label: "Jaaromzet" },
+    { key: "ambition", label: "Ambitie", long: true },
+    { key: "revenue_model", label: "Verdienmodel", long: true },
+  ]},
+  { title: "Werkwijze & Tools", fields: [
+    { key: "current_tools", label: "Huidige tools", long: true },
+    { key: "monthly_tool_costs", label: "Maandelijkse toolkosten" },
+    { key: "time_consuming_tasks", label: "Tijdrovende taken", long: true },
+    { key: "admin_hours_weekly", label: "Admin-uren per week" },
+    { key: "manual_data_transfers", label: "Handmatige dataoverdrachten", long: true },
+  ]},
+  { title: "Pijnpunten", fields: [
+    { key: "top_frustrations", label: "Top 3 frustraties", long: true },
+    { key: "failure_under_pressure", label: "Wat valt om onder druk?", long: true },
+    { key: "lost_clients_due_to_workflow", label: "Verloren klanten door workflow?", long: true },
+    { key: "should_be_automatic", label: "Wat moet automatisch?", long: true },
+  ]},
+  { title: "Groei", fields: [
+    { key: "growth_blockers", label: "Groeiblokkers", long: true },
+    { key: "breaks_at_2x_clients", label: "Wat breekt bij 2x klanten?", long: true },
+    { key: "needs_shared_platform", label: "Gedeeld platform nodig?", long: true },
+  ]},
+  { title: "Prioriteiten", fields: [
+    { key: "automation_priority", label: "#1 automatiseringsprioriteit", long: true },
+    { key: "desired_timeline", label: "Gewenste tijdlijn" },
+    { key: "budget_range", label: "Budget" },
+    { key: "dealbreakers", label: "Dealbreakers", long: true },
+  ]},
+];
+
 export function AdminBriefDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -19,6 +62,12 @@ export function AdminBriefDetail() {
   const [summaryError, setSummaryError] = useState<string | null>(null);
   const [showAddTranscript, setShowAddTranscript] = useState(false);
   const [tForm, setTForm] = useState({ title: "", kind: "transcript", body: "", meeting_date: "" });
+
+  // Bewerken van intake-antwoorden (ook na indienen; admin is bron van waarheid)
+  const [editing, setEditing] = useState(false);
+  const [briefForm, setBriefForm] = useState<Record<string, string>>({});
+  const [briefFeatures, setBriefFeatures] = useState<string[]>([]);
+  const [savingBrief, setSavingBrief] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -64,6 +113,48 @@ export function AdminBriefDetail() {
     if (data) setTranscripts((prev) => [...prev, data as BriefTranscript]);
     setTForm({ title: "", kind: "transcript", body: "", meeting_date: "" });
     setShowAddTranscript(false);
+  }
+
+  function startEditing() {
+    if (!brief) return;
+    const form: Record<string, string> = {};
+    for (const section of BRIEF_SECTIONS) {
+      for (const f of section.fields) form[f.key] = (brief[f.key] as string | null) ?? "";
+    }
+    form.brand_colors = brief.brand_colors ?? "";
+    form.brand_notes = brief.brand_notes ?? "";
+    form.additional_notes = brief.additional_notes ?? "";
+    form.inspiration_urls = (brief.inspiration_urls ?? []).join(", ");
+    setBriefForm(form);
+    setBriefFeatures(Array.isArray(brief.selected_features) ? [...brief.selected_features] : []);
+    setEditing(true);
+  }
+
+  async function saveBrief() {
+    if (!brief || !briefForm.business_name?.trim()) return;
+    setSavingBrief(true);
+    const payload: Record<string, unknown> = {};
+    for (const section of BRIEF_SECTIONS) {
+      for (const f of section.fields) {
+        const v = (briefForm[f.key] ?? "").trim();
+        payload[f.key] = f.key === "business_name" ? v : v || null;
+      }
+    }
+    payload.brand_colors = briefForm.brand_colors.trim() || null;
+    payload.brand_notes = briefForm.brand_notes.trim() || null;
+    payload.additional_notes = briefForm.additional_notes.trim() || null;
+    payload.inspiration_urls = briefForm.inspiration_urls.split(",").map((s) => s.trim()).filter(Boolean);
+    payload.selected_features = briefFeatures;
+    const { error } = await supabase.from("discovery_briefs").update(payload).eq("id", brief.id);
+    if (!error) {
+      setBrief((prev) => prev ? { ...prev, ...payload } as DiscoveryBrief : prev);
+      setEditing(false);
+    }
+    setSavingBrief(false);
+  }
+
+  function toggleFeature(fid: string) {
+    setBriefFeatures((prev) => prev.includes(fid) ? prev.filter((f) => f !== fid) : [...prev, fid]);
   }
 
   async function markReviewed() {
@@ -122,7 +213,7 @@ export function AdminBriefDetail() {
     );
   }
 
-  const featureNames = (brief.selected_features ?? []).map((fId: string) => {
+  const featureNames = (Array.isArray(brief.selected_features) ? brief.selected_features : []).map((fId: string) => {
     for (const cat of featureCategories) {
       const feat = cat.features.find((f: { id: string; label: string }) => f.id === fId);
       if (feat) return feat.label;
@@ -155,6 +246,17 @@ export function AdminBriefDetail() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {editing ? (
+            <>
+              <button onClick={() => setEditing(false)} className="text-sm text-text-muted hover:text-text px-2 py-2.5 transition-colors">Annuleer</button>
+              <button onClick={saveBrief} disabled={savingBrief || !briefForm.business_name?.trim()}
+                className="inline-flex items-center gap-2 bg-text text-white rounded-[8px] px-4 py-2.5 text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50">
+                {savingBrief ? "Opslaan..." : "Opslaan"}
+              </button>
+            </>
+          ) : (
+            <button onClick={startEditing} className="text-sm text-text-secondary hover:text-text px-2 py-2.5 transition-colors">Bewerken</button>
+          )}
           {existingProjectId ? (
             <Link
               to={`/admin/projecten/${existingProjectId}`}
@@ -321,58 +423,70 @@ export function AdminBriefDetail() {
         )}
       </div>
 
-      {/* Sections */}
-      <Section title="Bedrijf">
-        <Field label="Bedrijfsnaam" value={brief.business_name} />
-        <Field label="Beschrijving" value={brief.business_description} />
-        <Field label="Website" value={brief.website_url} />
-        <Field label="Branche" value={brief.industry} />
-        <Field label="Teamgrootte" value={brief.team_size} />
-        <Field label="Jaaromzet" value={brief.annual_revenue} />
-        <Field label="Ambitie" value={brief.ambition} />
-        <Field label="Verdienmodel" value={brief.revenue_model} />
-      </Section>
-
-      <Section title="Werkwijze & Tools">
-        <Field label="Huidige tools" value={brief.current_tools} />
-        <Field label="Maandelijkse toolkosten" value={brief.monthly_tool_costs} />
-        <Field label="Tijdrovende taken" value={brief.time_consuming_tasks} />
-        <Field label="Admin-uren per week" value={brief.admin_hours_weekly} />
-        <Field label="Handmatige dataoverdrachten" value={brief.manual_data_transfers} />
-      </Section>
-
-      <Section title="Pijnpunten">
-        <Field label="Top 3 frustraties" value={brief.top_frustrations} />
-        <Field label="Wat valt om onder druk?" value={brief.failure_under_pressure} />
-        <Field label="Verloren klanten door workflow?" value={brief.lost_clients_due_to_workflow} />
-        <Field label="Wat moet automatisch?" value={brief.should_be_automatic} />
-      </Section>
-
-      <Section title="Groei">
-        <Field label="Groeiblokkers" value={brief.growth_blockers} />
-        <Field label="Wat breekt bij 2x klanten?" value={brief.breaks_at_2x_clients} />
-        <Field label="Gedeeld platform nodig?" value={brief.needs_shared_platform} />
-      </Section>
-
-      <Section title="Prioriteiten">
-        <Field label="#1 automatiseringsprioriteit" value={brief.automation_priority} />
-        <Field label="Gewenste tijdlijn" value={brief.desired_timeline} />
-        <Field label="Budget" value={brief.budget_range} />
-        <Field label="Dealbreakers" value={brief.dealbreakers} />
-      </Section>
+      {/* Sections - leesweergave of bewerkmodus */}
+      {BRIEF_SECTIONS.map((section) => (
+        <Section key={section.title} title={section.title}>
+          {section.fields.map((f) =>
+            editing ? (
+              <EditField key={f.key} label={f.label} long={f.long}
+                value={briefForm[f.key] ?? ""} onChange={(v) => setBriefForm((prev) => ({ ...prev, [f.key]: v }))} />
+            ) : (
+              <Field key={f.key} label={f.label} value={brief[f.key] as string | null} />
+            )
+          )}
+        </Section>
+      ))}
 
       <Section title="Inspiratie">
-        <Field label="Geselecteerde features" value={featureNames.length > 0 ? featureNames.join(", ") : null} />
-        <Field label="Inspiratie URLs" value={brief.inspiration_urls?.join(", ")} />
-        <Field label="Merkkleuren" value={brief.brand_colors} />
-        <Field label="Stijlnotities" value={brief.brand_notes} />
+        {editing ? (
+          <div className="sm:col-span-2">
+            <p className="text-xs text-text-muted mb-1.5">Geselecteerde features</p>
+            <div className="flex flex-col gap-2">
+              {featureCategories.map((cat) => (
+                <div key={cat.id} className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[11px] text-text-muted w-full">{cat.label}</span>
+                  {cat.features.map((feat) => {
+                    const active = briefFeatures.includes(feat.id);
+                    return (
+                      <button key={feat.id} type="button" onClick={() => toggleFeature(feat.id)}
+                        className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${active ? "bg-text text-white border-text" : "bg-bg border-border-light text-text-secondary hover:border-border"}`}>
+                        {feat.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <Field label="Geselecteerde features" value={featureNames.length > 0 ? featureNames.join(", ") : null} />
+        )}
+        {editing ? (
+          <>
+            <EditField label="Inspiratie URLs (komma-gescheiden)" value={briefForm.inspiration_urls ?? ""} onChange={(v) => setBriefForm((prev) => ({ ...prev, inspiration_urls: v }))} />
+            <EditField label="Merkkleuren" value={briefForm.brand_colors ?? ""} onChange={(v) => setBriefForm((prev) => ({ ...prev, brand_colors: v }))} />
+            <EditField label="Stijlnotities" long value={briefForm.brand_notes ?? ""} onChange={(v) => setBriefForm((prev) => ({ ...prev, brand_notes: v }))} />
+          </>
+        ) : (
+          <>
+            <Field label="Inspiratie URLs" value={brief.inspiration_urls?.join(", ")} />
+            <Field label="Merkkleuren" value={brief.brand_colors} />
+            <Field label="Stijlnotities" value={brief.brand_notes} />
+          </>
+        )}
       </Section>
 
-      {brief.additional_notes && (
+      {editing ? (
+        <Section title="Extra notities">
+          <div className="sm:col-span-2">
+            <EditField label="Extra notities" long value={briefForm.additional_notes ?? ""} onChange={(v) => setBriefForm((prev) => ({ ...prev, additional_notes: v }))} />
+          </div>
+        </Section>
+      ) : brief.additional_notes ? (
         <Section title="Extra notities">
           <p className="text-sm text-text whitespace-pre-wrap">{brief.additional_notes}</p>
         </Section>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -395,6 +509,20 @@ function Field({ label, value }: { label: string; value: string | null | undefin
       <p className={`text-sm ${value ? "text-text" : "text-text-muted italic"} whitespace-pre-wrap`}>
         {value || "Niet ingevuld"}
       </p>
+    </div>
+  );
+}
+
+function EditField({ label, value, onChange, long }: { label: string; value: string; onChange: (v: string) => void; long?: boolean }) {
+  const cls = "w-full rounded-[8px] border border-border-light bg-bg px-3 py-2 text-sm text-text outline-none focus:border-text transition-colors";
+  return (
+    <div>
+      <p className="text-xs text-text-muted mb-1">{label}</p>
+      {long ? (
+        <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={3} className={`${cls} resize-y`} />
+      ) : (
+        <input value={value} onChange={(e) => onChange(e.target.value)} className={cls} />
+      )}
     </div>
   );
 }

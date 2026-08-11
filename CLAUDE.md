@@ -1,9 +1,9 @@
-# Valck Studio — Project Instructions
+# Valck Studio - Project Instructions
 
 ## Werkwijze voor Claude (lees dit eerst)
 
 - Stuur altijd eerst een samenvatting van wat je gaat doen en wacht op goedkeuring
-- Nooit pushen zonder expliciete toestemming — altijd eerst vragen
+- Nooit pushen zonder expliciete toestemming - altijd eerst vragen
 - Bij elke aanpassing security checken en risico's expliciet benoemen
 - Begin elke sessie met `git fetch` om te checken of er nieuwe commits zijn
 - Bij portal/dashboard-werk (admin, client, of nieuwe user-facing secties): controleer ALTIJD dat backend (RLS policies, Supabase queries, DB functies) en frontend (routing, guards, contexts, components) op elkaar zijn afgestemd. Check per feature: kan de juiste user de data opvragen? Blokkeert RLS de verkeerde users? Klopt de redirect-flow? Dit voorkomt losse eindjes aan één kant.
@@ -26,7 +26,7 @@ Valck Studio is een publieke portfolio-website voor een solo product studio, met
 
 ## Beveiligingsregels
 
-> Deze regels zijn HARD — ze mogen NOOIT worden gebroken, ongeacht de context.
+> Deze regels zijn HARD - ze mogen NOOIT worden gebroken, ongeacht de context.
 > Bij twijfel: kies de veiligere optie.
 
 ### SEC-1: Row Level Security (RLS)
@@ -40,7 +40,7 @@ Elke tabel in Supabase MOET RLS hebben. Een klant mag NOOIT data van een andere 
 - Test RLS policies handmatig na elke migratie
 
 ```sql
--- FOUT — tabel zonder RLS
+-- FOUT - tabel zonder RLS
 CREATE TABLE documents (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   client_id UUID REFERENCES auth.users(id),
@@ -48,7 +48,7 @@ CREATE TABLE documents (
 );
 -- Iedereen kan alles lezen!
 
--- GOED — tabel met RLS
+-- GOED - tabel met RLS
 CREATE TABLE documents (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   client_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
@@ -73,22 +73,22 @@ De React frontend draait in de browser van de klant. Alles in de frontend is **p
 - Edge Functions (toekomstig) zijn de enige plek voor server-side secrets
 
 ```typescript
-// FOUT — service role key in frontend
+// FOUT - service role key in frontend
 const supabase = createClient(url, import.meta.env.VITE_SERVICE_ROLE_KEY);
 
-// GOED — anon key in frontend, RLS beschermt data
+// GOED - anon key in frontend, RLS beschermt data
 const supabase = createClient(url, import.meta.env.VITE_SUPABASE_ANON_KEY);
 ```
 
 ### SEC-3: Environment Variables
 
 **Regels:**
-- `.env` staat ALTIJD in `.gitignore` — nooit committen
+- `.env` staat ALTIJD in `.gitignore` - nooit committen
 - Variabelen met `VITE_` prefix zijn zichtbaar in de frontend (publiek)
 - De anon key is veilig in de frontend omdat RLS de data beschermt
 
 ```bash
-# .env — NOOIT committen
+# .env - NOOIT committen
 VITE_SUPABASE_URL=https://xxx.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJ...  # Veilig in frontend dankzij RLS
 ```
@@ -99,14 +99,14 @@ VITE_SUPABASE_ANON_KEY=eyJ...  # Veilig in frontend dankzij RLS
 - NOOIT wijzigen zonder expliciete toestemming: `AuthContext.tsx`, `ProtectedRoute.tsx`, `supabase.ts`
 - Alle portal routes MOETEN door `ProtectedRoute` lopen
 - `signUp` stuurt NOOIT gevoelige data als metadata (alleen naam en bedrijf)
-- Session tokens worden beheerd door Supabase SDK — nooit handmatig opslaan
+- Session tokens worden beheerd door Supabase SDK - nooit handmatig opslaan
 
 ### SEC-5: Input & Data Veiligheid
 
 **Regels:**
 - Gebruik NOOIT `dangerouslySetInnerHTML` met user content
 - Valideer formulierinput aan clientzijde (required, type, minLength)
-- Bedragen altijd in **centen** (integers) — nooit floats
+- Bedragen altijd in **centen** (integers) - nooit floats
 - Vertrouw NOOIT op client-side validatie als enige security boundary
 
 ---
@@ -225,7 +225,7 @@ src/
 - `handle_new_user`: maakt automatisch een `profiles` record aan bij registratie
 
 ### Belangrijke velden
-- **Bedragen:** altijd `amount_cents` (integer) — nooit floats
+- **Bedragen:** altijd `amount_cents` (integer) - nooit floats
 - **Project fases:** `'discovery' | 'build' | 'scale' | 'completed'`
 - **Factuur status:** `'concept' | 'verstuurd' | 'betaald' | 'vervallen'`
 - **Foreign keys:** altijd `ON DELETE CASCADE` voor user-gerelateerde data
@@ -243,7 +243,7 @@ src/
 
 ---
 
-## Anti-Patterns — NOOIT Doen
+## Anti-Patterns - NOOIT Doen
 
 | Anti-Pattern | Waarom fout | Doe dit |
 |---|---|---|
@@ -279,23 +279,23 @@ src/
 De volgende skills zijn geïnstalleerd en handelen general best practices af:
 
 **Development:**
-- `vercel-react-best-practices` — React performance & patterns
-- `vercel-composition-patterns` — Layout & composition patterns
-- `react-components` — Component architecture
-- `typescript-advanced-types` — TypeScript patterns
-- `tailwind-css-patterns` — Tailwind utility patterns
-- `supabase-postgres-best-practices` — Database optimalisatie & RLS
+- `vercel-react-best-practices` - React performance & patterns
+- `vercel-composition-patterns` - Layout & composition patterns
+- `react-components` - Component architecture
+- `typescript-advanced-types` - TypeScript patterns
+- `tailwind-css-patterns` - Tailwind utility patterns
+- `supabase-postgres-best-practices` - Database optimalisatie & RLS
 
 **Security & Compliance:**
-- `security-review` — OWASP security checklist
-- `frontend-security` — XSS/CSRF/CSP audit
-- `supabase-pentest` — RLS/auth security audit
-- `gdpr-compliance` — AVG compliance checks
-- `zod-validation` — Input validatie
+- `security-review` - OWASP security checklist
+- `frontend-security` - XSS/CSRF/CSP audit
+- `supabase-pentest` - RLS/auth security audit
+- `gdpr-compliance` - AVG compliance checks
+- `zod-validation` - Input validatie
 
 **Workflow:**
-- `finishing-a-development-branch` — Git merge workflow
-- `web-design-guidelines` — UI consistency
-- `find-skills` — Nieuwe skills zoeken en installeren
+- `finishing-a-development-branch` - Git merge workflow
+- `web-design-guidelines` - UI consistency
+- `find-skills` - Nieuwe skills zoeken en installeren
 
 Deze skills handelen generieke patronen af. De CLAUDE.md bevat alleen wat uniek is voor Valck Studio.

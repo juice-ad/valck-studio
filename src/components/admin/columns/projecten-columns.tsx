@@ -45,7 +45,7 @@ export const projectColumns: ColumnDef<ProjectRow>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Organisatie" />
     ),
-    cell: ({ getValue }) => getValue<string>() || "—",
+    cell: ({ getValue }) => getValue<string>() || "-",
   },
   {
     accessorKey: "phase",
@@ -77,7 +77,7 @@ export const projectColumns: ColumnDef<ProjectRow>[] = [
     ),
     cell: ({ row }) => {
       const date = row.getValue("start_date") as string | null;
-      return date ? new Date(date).toLocaleDateString("nl-NL") : "—";
+      return date ? new Date(date).toLocaleDateString("nl-NL") : "-";
     },
   },
 ];

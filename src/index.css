@@ -6,10 +6,10 @@
 
 /* ─── Design System: Valck Studio ─── */
 @theme {
-  /* Typography — Inter as primary font */
+  /* Typography - Inter as primary font */
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
-  /* Color Palette — Valck-specific tokens (not in shadcn) */
+  /* Color Palette - Valck-specific tokens (not in shadcn) */
   --color-bg: #fafafa;
   --color-bg-white: #ffffff;
   --color-text: #111111;
@@ -24,6 +24,8 @@
   --color-green-border: #d1fae5;
   --color-blue: #3b82f6;
   --color-blue-bg: #eff6ff;
+  --color-amber: #d97706;
+  --color-amber-bg: #fffbeb;
 
   /* Shadows */
   --shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
@@ -66,7 +68,7 @@
 /* ─── shadcn/ui theme bridge ─── */
 @theme inline {
   --font-heading: var(--font-sans);
-  /* DO NOT set --font-sans here — Inter is defined in Valck @theme above */
+  /* DO NOT set --font-sans here - Inter is defined in Valck @theme above */
 
   /* shadcn semantic color tokens */
   --color-background: var(--background);

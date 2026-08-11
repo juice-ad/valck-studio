@@ -7,7 +7,7 @@ Valck Studio's client relationship currently ends after the build phase. The app
 - Monthly subscriptions and invoicing happen outside the platform
 - Antoine has no central view of all running client platforms, their health, and ongoing obligations
 
-Building the ongoing relationship layer turns Valck Studio from a project delivery tool into a permanent client hub — directly supporting the recurring revenue model (monthly subscription tiers + pay-per-build).
+Building the ongoing relationship layer turns Valck Studio from a project delivery tool into a permanent client hub - directly supporting the recurring revenue model (monthly subscription tiers + pay-per-build).
 
 ## What Changes
 
@@ -26,12 +26,12 @@ Building the ongoing relationship layer turns Valck Studio from a project delive
 - `build-requests`: Large feature request flow with mini-intake (description, context, desired outcome, priority), admin scoping, and quote/approval workflow.
 - `subscription-tiers`: Pricing tier definitions (basis/groei/premium), per-client tier assignment, tier-based feature entitlements display, and admin subscription overview.
 - `platform-registry`: Registry of deployed client platforms with URL, accent color, module list, deployment status. Admin sees all platforms; client sees their own with direct link.
-- `realtime-chat`: Supabase Realtime upgrade for messaging — live message delivery, typing indicators, read receipts, online presence, profile avatars.
+- `realtime-chat`: Supabase Realtime upgrade for messaging - live message delivery, typing indicators, read receipts, online presence, profile avatars.
 - `moneybird-sync`: Moneybird API integration for invoice creation, payment status sync, and contact sync. Edge Function-based with webhook support.
 - `intake-branching`: Conditional question flow in the discovery wizard based on previous answers. Branch detection for business types (crew management, event management, inventory, CRM). Design preview step with live mockup rendering.
 
 ### Modified Capabilities
-<!-- No existing specs to modify — this is a greenfield openspec setup -->
+<!-- No existing specs to modify - this is a greenfield openspec setup -->
 
 ## Impact
 

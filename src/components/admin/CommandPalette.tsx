@@ -6,7 +6,6 @@ import {
   Building2,
   FolderKanban,
   Sparkles,
-  MessageCircle,
   FileText,
   Receipt,
   Search,
@@ -27,7 +26,6 @@ const navItems = [
   { label: "Gebruikers", path: "/admin/users", icon: Users, shortcut: "U" },
   { label: "Projecten", path: "/admin/projecten", icon: FolderKanban, shortcut: "P" },
   { label: "Intakes", path: "/admin/briefs", icon: Sparkles, shortcut: "I" },
-  { label: "Berichten", path: "/admin/berichten", icon: MessageCircle, shortcut: "B" },
   { label: "Documenten", path: "/admin/documenten", icon: FileText },
   { label: "Facturen", path: "/admin/facturen", icon: Receipt, shortcut: "F" },
 ];

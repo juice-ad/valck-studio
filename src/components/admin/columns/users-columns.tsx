@@ -20,7 +20,7 @@ export const userColumns: ColumnDef<UserRow>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Naam" />
     ),
-    cell: ({ row }) => row.getValue("full_name") || "—",
+    cell: ({ row }) => row.getValue("full_name") || "-",
   },
   {
     accessorKey: "email",
@@ -50,7 +50,7 @@ export const userColumns: ColumnDef<UserRow>[] = [
     id: "organisation",
     accessorFn: (row) => row.clients?.company_name ?? "",
     header: "Organisatie",
-    cell: ({ getValue }) => getValue<string>() || "—",
+    cell: ({ getValue }) => getValue<string>() || "-",
   },
   {
     accessorKey: "created_at",

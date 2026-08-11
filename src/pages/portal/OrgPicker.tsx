@@ -10,7 +10,7 @@ export function OrgPicker() {
 
   function handleSelect(clientId: string) {
     switchClient(clientId);
-    navigate("/portal/overzicht");
+    navigate("/portal/project");
   }
 
   return (

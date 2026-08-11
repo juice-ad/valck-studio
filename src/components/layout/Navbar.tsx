@@ -110,7 +110,7 @@ export function Navbar() {
                     </Link>
                   )}
                   <Link
-                    to="/portal/overzicht"
+                    to="/portal/project"
                     onClick={() => setDropdownOpen(false)}
                     className="block px-4 py-2 text-sm text-text hover:bg-accent-soft no-underline transition-colors"
                   >
@@ -180,7 +180,7 @@ export function Navbar() {
             {session ? (
               <>
                 <Link
-                  to="/portal/overzicht"
+                  to="/portal/project"
                   onClick={() => setMobileOpen(false)}
                   className="no-underline text-sm text-text-secondary font-[450] hover:text-text transition-colors"
                 >

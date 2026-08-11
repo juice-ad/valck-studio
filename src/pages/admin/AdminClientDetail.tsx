@@ -227,7 +227,7 @@ export function AdminClientDetail() {
             {users.map((u) => (
               <div key={u.id} className="flex items-center justify-between p-3 rounded-[8px] border border-border-light">
                 <div>
-                  <p className="text-sm font-medium text-text">{u.full_name || "—"}</p>
+                  <p className="text-sm font-medium text-text">{u.full_name || "-"}</p>
                   <p className="text-xs text-text-muted">{u.email}</p>
                 </div>
                 <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-accent-soft text-text-muted">
@@ -283,7 +283,7 @@ export function AdminClientDetail() {
               <div key={inv.id} className="flex items-center justify-between p-3 rounded-[8px] border border-border-light">
                 <div>
                   <p className="text-sm font-medium text-text">{inv.number}</p>
-                  <p className="text-xs text-text-muted">{inv.description || "—"}</p>
+                  <p className="text-xs text-text-muted">{inv.description || "-"}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-medium text-text">
@@ -311,7 +311,7 @@ function InfoField({ label, value }: { label: string; value: string | null | und
   return (
     <div>
       <p className="text-xs text-text-muted">{label}</p>
-      <p className="text-sm text-text">{value || "—"}</p>
+      <p className="text-sm text-text">{value || "-"}</p>
     </div>
   );
 }

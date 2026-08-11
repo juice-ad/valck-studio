@@ -23,7 +23,7 @@ const STEPS = [
   {
     icon: MessageCircle,
     title: "Kort op de bal",
-    body: "Vragen? Stuur een bericht of plan een gesprek. We houden de lijntjes kort en jullie op de hoogte.",
+    body: "Vragen of ideeën? Plan een gesprek of geef feedback bij een module. We houden de lijntjes kort en jullie op de hoogte.",
   },
 ];
 

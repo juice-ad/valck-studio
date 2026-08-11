@@ -61,12 +61,12 @@ export const invoiceColumns: ColumnDef<InvoiceRow>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Organisatie" />
     ),
-    cell: ({ getValue }) => getValue<string>() || "—",
+    cell: ({ getValue }) => getValue<string>() || "-",
   },
   {
     accessorKey: "description",
     header: "Omschrijving",
-    cell: ({ row }) => row.getValue("description") || "—",
+    cell: ({ row }) => row.getValue("description") || "-",
   },
   {
     accessorKey: "amount_cents",
@@ -102,7 +102,7 @@ export const invoiceColumns: ColumnDef<InvoiceRow>[] = [
     ),
     cell: ({ row }) => {
       const date = row.getValue("due_date") as string | null;
-      return date ? new Date(date).toLocaleDateString("nl-NL") : "—";
+      return date ? new Date(date).toLocaleDateString("nl-NL") : "-";
     },
   },
 ];

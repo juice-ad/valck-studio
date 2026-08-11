@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Menu, LogOut, Settings } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { NotificationBell } from "@/components/portal/NotificationBell";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,6 +45,8 @@ export function PortalHeader({ onMenuToggle }: Props) {
         <span className="font-light text-text-muted ml-1.5">studio</span>
       </Link>
 
+      <div className="flex items-center gap-1">
+      <NotificationBell />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button className="w-8 h-8 rounded-full bg-text text-white text-xs font-semibold flex items-center justify-center">
@@ -71,6 +74,7 @@ export function PortalHeader({ onMenuToggle }: Props) {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      </div>
     </header>
   );
 }

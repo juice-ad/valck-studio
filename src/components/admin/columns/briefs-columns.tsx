@@ -36,7 +36,7 @@ export const briefColumns: ColumnDef<BriefRow>[] = [
     id: "organisation",
     accessorFn: (row) => row.clients?.company_name ?? "",
     header: "Organisatie",
-    cell: ({ getValue }) => getValue<string>() || "—",
+    cell: ({ getValue }) => getValue<string>() || "-",
   },
   {
     accessorKey: "status",
@@ -59,7 +59,7 @@ export const briefColumns: ColumnDef<BriefRow>[] = [
     ),
     cell: ({ row }) => {
       const date = row.getValue("submitted_at") as string | null;
-      return date ? new Date(date).toLocaleDateString("nl-NL") : "—";
+      return date ? new Date(date).toLocaleDateString("nl-NL") : "-";
     },
   },
   {

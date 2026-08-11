@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard,
   FolderKanban,
-  MessageCircle,
   Receipt,
   LogOut,
   Settings,
@@ -25,12 +23,10 @@ import {
 const navItems: {
   label: string;
   to: string;
-  icon: typeof LayoutDashboard;
+  icon: typeof FolderKanban;
   hasNotification?: boolean;
 }[] = [
-  { label: "Overzicht", to: "/portal/overzicht", icon: LayoutDashboard, hasNotification: true },
-  { label: "Project", to: "/portal/project", icon: FolderKanban },
-  { label: "Berichten", to: "/portal/berichten", icon: MessageCircle },
+  { label: "Project", to: "/portal/project", icon: FolderKanban, hasNotification: true },
   { label: "Facturen", to: "/portal/facturen", icon: Receipt },
 ];
 

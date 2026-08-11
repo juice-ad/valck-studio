@@ -64,7 +64,7 @@ const faqs = [
   {
     question: "Wat kost een project?",
     answer:
-      "Elk project begint met een gratis discovery fase. Daarna ontvang je een vaste-prijs offerte op basis van scope en complexiteit. Geen uurtje-factuurtje — je weet vooraf wat je betaalt.",
+      "Elk project begint met een gratis discovery fase. Daarna ontvang je een vaste-prijs offerte op basis van scope en complexiteit. Geen uurtje-factuurtje: je weet vooraf wat je betaalt.",
   },
   {
     question: "Hoe lang duurt een build?",
@@ -74,12 +74,12 @@ const faqs = [
   {
     question: "Wie is eigenaar van de code?",
     answer:
-      "Jij. Na oplevering ontvang je 100% van de broncode, inclusief alle rechten. De code draait op jouw eigen infrastructure — geen vendor lock-in.",
+      "Jij. Na oplevering ontvang je 100% van de broncode, inclusief alle rechten. De code draait op jouw eigen infrastructure, geen vendor lock-in.",
   },
   {
     question: "Kan ik tussentijds opzeggen?",
     answer:
-      "Bij Scale (maandelijks retainer) kun je elke maand opzeggen. Bij Build werk je met vaste milestones — je betaalt alleen voor afgerond werk.",
+      "Bij Scale (maandelijks retainer) kun je elke maand opzeggen. Bij Build werk je met vaste milestones: je betaalt alleen voor afgerond werk.",
   },
   {
     question: "Welke technologieën gebruiken jullie?",
@@ -217,13 +217,13 @@ export function Pricing({ hideHeader = false }: PricingProps) {
                       <tr key={i} className="border-b border-border-light last:border-b-0">
                         <td className="px-6 py-3 text-sm text-text">{feature as string}</td>
                         <td className="px-6 py-3 text-center">
-                          {discovery ? <Check size={16} className="text-green mx-auto" /> : <span className="text-text-muted">—</span>}
+                          {discovery ? <Check size={16} className="text-green mx-auto" /> : <span className="text-text-muted">-</span>}
                         </td>
                         <td className="px-6 py-3 text-center bg-accent-soft/30">
-                          {build ? <Check size={16} className="text-green mx-auto" /> : <span className="text-text-muted">—</span>}
+                          {build ? <Check size={16} className="text-green mx-auto" /> : <span className="text-text-muted">-</span>}
                         </td>
                         <td className="px-6 py-3 text-center">
-                          {scale ? <Check size={16} className="text-green mx-auto" /> : <span className="text-text-muted">—</span>}
+                          {scale ? <Check size={16} className="text-green mx-auto" /> : <span className="text-text-muted">-</span>}
                         </td>
                       </tr>
                     ))}

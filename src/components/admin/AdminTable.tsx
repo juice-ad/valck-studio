@@ -136,7 +136,7 @@ export function AdminTable<T>({
                   >
                     {columns.map((col) => (
                       <td key={col.key} className={`px-6 py-4 text-sm text-text ${col.className ?? ""}`}>
-                        {col.render ? col.render(row) : String((row as Record<string, unknown>)[col.key] ?? "—")}
+                        {col.render ? col.render(row) : String((row as Record<string, unknown>)[col.key] ?? "-")}
                       </td>
                     ))}
                   </tr>
@@ -151,7 +151,7 @@ export function AdminTable<T>({
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-4">
           <p className="text-xs text-text-muted">
-            {sorted.length} resultaten — pagina {page + 1} van {totalPages}
+            {sorted.length} resultaten · pagina {page + 1} van {totalPages}
           </p>
           <div className="flex items-center gap-1">
             <button

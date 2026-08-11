@@ -32,13 +32,13 @@ export const documentColumns: ColumnDef<DocRow>[] = [
     id: "organisation",
     accessorFn: (row) => row.clients?.company_name ?? "",
     header: "Organisatie",
-    cell: ({ getValue }) => getValue<string>() || "—",
+    cell: ({ getValue }) => getValue<string>() || "-",
   },
   {
     id: "project",
     accessorFn: (row) => row.projects?.title ?? "",
     header: "Project",
-    cell: ({ getValue }) => getValue<string>() || "—",
+    cell: ({ getValue }) => getValue<string>() || "-",
   },
   {
     accessorKey: "created_at",

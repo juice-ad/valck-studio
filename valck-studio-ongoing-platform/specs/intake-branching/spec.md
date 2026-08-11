@@ -43,7 +43,7 @@ The system SHALL include a design preview step where the client uploads their lo
 
 #### Scenario: Live preview renders a dashboard mockup
 - **WHEN** client has selected a color and optionally uploaded a logo
-- **THEN** a static dashboard mockup renders below the form showing: sidebar with logo, navigation items, a dashboard header, stat cards, and a table — all styled with the client's chosen accent color against the standard Valck Studio design system (#fafafa bg, Inter font, #111111 text)
+- **THEN** a static dashboard mockup renders below the form showing: sidebar with logo, navigation items, a dashboard header, stat cards, and a table - all styled with the client's chosen accent color against the standard Valck Studio design system (#fafafa bg, Inter font, #111111 text)
 
 ### Requirement: Branch answers are stored in discovery_briefs
 The system SHALL store branching answers in the existing discovery_briefs table using a JSONB field for branch-specific responses.

@@ -138,7 +138,7 @@ const automations = [
     icon: "📧",
     title: "Transactionele e-mails",
     description:
-      "Bevestigingen, herinneringen en facturen via Resend — getriggerd door statuswijzigingen.",
+      "Bevestigingen, herinneringen en facturen via Resend, getriggerd door statuswijzigingen.",
   },
   {
     icon: "📅",
@@ -162,7 +162,7 @@ const automations = [
     icon: "📊",
     title: "Realtime analytics",
     description:
-      "Live dashboards met omzet, commissies en performance — geen handmatige exports meer.",
+      "Live dashboards met omzet, commissies en performance, geen handmatige exports meer.",
   },
 ];
 
@@ -185,7 +185,7 @@ export function Portfolio() {
     <>
       <section className="pt-40 pb-24 px-8 max-md:pt-28 max-md:pb-16 max-md:px-5">
         <div className="max-w-[1120px] mx-auto">
-          {/* Page header — full width */}
+          {/* Page header - full width */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -206,7 +206,7 @@ export function Portfolio() {
 
           {/* 2-column layout: main + sidebar */}
           <div className="grid grid-cols-12 gap-8 max-md:grid-cols-1">
-            {/* Sidebar — mobile first (above content) */}
+            {/* Sidebar - mobile first (above content) */}
             <aside className="col-span-4 max-md:col-span-1 order-first md:order-last">
               <div className="sticky top-32 rounded-[12px] bg-bg-white border border-border-light p-6 space-y-0">
                 {/* Project meta */}
@@ -287,7 +287,7 @@ export function Portfolio() {
                     inventaris in spreadsheets, personeelsplanning op papier. De
                     sales pipeline bestond uit losse notities en de facturatie was
                     een handmatig, foutgevoelig proces. Er was geen centraal
-                    overzicht van performance — laat staan analytics. Naarmate het
+                    overzicht van performance, laat staan analytics. Naarmate het
                     aantal evenementen groeide, werd dit onhoudbaar. Ze hadden niet
                     alleen een client portal nodig, maar een compleet operationeel
                     platform.
@@ -353,7 +353,7 @@ export function Portfolio() {
                     Automations & koppelingen
                   </h2>
                   <p className="text-sm text-text-muted mb-6">
-                    Van Stripe-webhooks tot automatische e-mails — alles draait
+                    Van Stripe-webhooks tot automatische e-mails: alles draait
                     zonder handmatig werk.
                   </p>
                   <div className="grid grid-cols-2 gap-4 max-md:grid-cols-1">

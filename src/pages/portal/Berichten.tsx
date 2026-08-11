@@ -2,10 +2,12 @@ import { useEffect, useState, useRef, type FormEvent } from "react";
 import { Send } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
+import { useActiveClient } from "@/contexts/ClientContext";
 import type { Message } from "@/types/portal";
 
 export function Berichten() {
   const { user } = useAuth();
+  const { activeClientId } = useActiveClient();
   const [messages, setMessages] = useState<Message[]>([]);
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
@@ -13,18 +15,18 @@ export function Berichten() {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (!activeClientId) return;
 
     supabase
       .from("messages")
       .select("*")
-      .or(`sender_id.eq.${user.id},is_from_studio.eq.true`)
+      .eq("client_id", activeClientId)
       .order("created_at", { ascending: true })
       .then(({ data }) => {
         setMessages((data as Message[]) ?? []);
         setLoading(false);
       });
-  }, [user]);
+  }, [activeClientId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -32,12 +34,13 @@ export function Berichten() {
 
   async function handleSend(e: FormEvent) {
     e.preventDefault();
-    if (!body.trim() || !user) return;
+    if (!body.trim() || !user || !activeClientId) return;
 
     setSending(true);
     const { data, error } = await supabase
       .from("messages")
       .insert({
+        client_id: activeClientId,
         sender_id: user.id,
         body: body.trim(),
         is_from_studio: false,

@@ -10,7 +10,7 @@ const teasers = [
     iconColor: "text-blue",
     title: "Werkwijze",
     description:
-      "Van discovery tot schaalbaar platform — een bewezen 3-fasen proces zonder verrassingen.",
+      "Van discovery tot schaalbaar platform: een bewezen 3-fasen proces zonder verrassingen.",
     to: "/werkwijze",
   },
   {

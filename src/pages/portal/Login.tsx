@@ -36,7 +36,7 @@ export function Login() {
           return;
         }
       }
-      navigate("/portal/overzicht");
+      navigate("/portal/project");
     }
   }
 

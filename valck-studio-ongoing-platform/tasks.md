@@ -11,7 +11,7 @@
 - [ ] 1.9 Add `moneybird_contact_id` column to existing `clients` table
 - [ ] 1.10 Enable Supabase Realtime on the `messages` table
 
-## 2. Support Tickets — Portal
+## 2. Support Tickets - Portal
 
 - [ ] 2.1 Create `TicketForm` component with subject, description, priority fields
 - [ ] 2.2 Create portal `Tickets.tsx` page with ticket list (subject, status badge, priority, date)
@@ -21,7 +21,7 @@
 - [ ] 2.6 Add ticket route to App.tsx (`/portal/tickets` and `/portal/tickets/:id`)
 - [ ] 2.7 Add open ticket count stat card to portal Dashboard
 
-## 3. Support Tickets — Admin
+## 3. Support Tickets - Admin
 
 - [ ] 3.1 Create admin `AdminTickets.tsx` page with DataTable (client, subject, status, priority, age)
 - [ ] 3.2 Create admin `AdminTicketDetail.tsx` with status management, reply form, and timeline
@@ -30,7 +30,7 @@
 - [ ] 3.5 Add ticket routes to App.tsx (`/admin/tickets` and `/admin/tickets/:id`)
 - [ ] 3.6 Add open ticket count to admin Dashboard KPIs
 
-## 4. Build Requests — Portal
+## 4. Build Requests - Portal
 
 - [ ] 4.1 Create `BuildRequestForm` component with title, description, desired_outcome, context, priority
 - [ ] 4.2 Create portal `BuildRequests.tsx` page with request list (title, status, date, quoted amount)
@@ -40,7 +40,7 @@
 - [ ] 4.6 Add routes to App.tsx (`/portal/build-requests` and `/portal/build-requests/:id`)
 - [ ] 4.7 Add active build request count to portal Dashboard
 
-## 5. Build Requests — Admin
+## 5. Build Requests - Admin
 
 - [ ] 5.1 Create admin `AdminBuildRequests.tsx` page with pipeline columns (ingediend → in_scoping → offerte → akkoord → in_bouw → opgeleverd)
 - [ ] 5.2 Create admin `AdminBuildRequestDetail.tsx` with scoping notes, quoted amount input, and status management
@@ -76,7 +76,7 @@
 - [ ] 8.3 Refactor portal `Berichten.tsx` to use real-time hooks instead of fetch-on-load
 - [ ] 8.4 Refactor admin `AdminBerichten.tsx` to use real-time hooks
 - [ ] 8.5 Add typing indicator UI component ("is aan het typen...")
-- [ ] 8.6 Add read receipts — mark messages as read when conversation is opened
+- [ ] 8.6 Add read receipts - mark messages as read when conversation is opened
 - [ ] 8.7 Add unread message count badge to sidebar nav items
 - [ ] 8.8 Add online/offline presence dot to conversation list
 - [ ] 8.9 Add general channel support (project_id = null) for non-project messages
@@ -87,8 +87,8 @@
 - [ ] 9.1 Create Supabase Edge Function `moneybird-sync` with Moneybird API client (contacts, invoices)
 - [ ] 9.2 Create admin settings UI for Moneybird API token and administration ID configuration
 - [ ] 9.3 Add "Test verbinding" button that validates the Moneybird connection
-- [ ] 9.4 Add contact sync — create/update Moneybird contact when client is created/updated
-- [ ] 9.5 Create invoice creation flow — admin creates invoice → Edge Function creates Moneybird sales invoice
+- [ ] 9.4 Add contact sync - create/update Moneybird contact when client is created/updated
+- [ ] 9.5 Create invoice creation flow - admin creates invoice → Edge Function creates Moneybird sales invoice
 - [ ] 9.6 Build portal `Facturen.tsx` with invoice list (number, description, amount, status, due date)
 - [ ] 9.7 Build admin `AdminFacturen.tsx` with invoice overview across clients + create invoice form
 - [ ] 9.8 Add invoice payment status sync (polling or webhook from Moneybird)

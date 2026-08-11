@@ -65,6 +65,38 @@ export interface Project {
   created_at: string;
 }
 
+// --- Modules (de onderdelen van een project) ---
+
+export type ModuleStatus = "planned" | "building" | "live" | "on_hold";
+
+/** Systeem-module (het fundament) of agent (draait erop, met maandprijs). */
+export type ModuleKind = "system" | "agent";
+
+export interface Module {
+  id: string;
+  project_id: string;
+  client_id: string;
+  name: string;
+  description: string | null;
+  status: ModuleStatus;
+  kind: ModuleKind;
+  monthly_price_cents: number | null;
+  sequence_order: number;
+  preview_url: string | null;
+  icon: string | null;
+  created_at: string;
+}
+
+/** Wat een agent gedaan heeft - voedt de module-pagina en de weekdrop. */
+export interface AgentActivity {
+  id: string;
+  module_id: string;
+  client_id: string;
+  occurred_on: string;
+  summary: string;
+  created_at: string;
+}
+
 // --- Workflow steps (de ruggengraat van "Jouw traject") ---
 
 export type WorkflowStepCategory =
@@ -154,11 +186,25 @@ export interface ProjectUpdate {
   project_id: string;
   title: string;
   body: string | null;
+  kind: "update" | "drop";
+  link: string | null;
+  created_at: string;
+}
+
+export interface ProjectCost {
+  id: string;
+  project_id: string;
+  client_id: string;
+  description: string;
+  amount_cents: number;
+  is_overrun: boolean;
+  sequence_order: number;
   created_at: string;
 }
 
 export interface Message {
   id: string;
+  client_id: string | null;
   project_id: string | null;
   sender_id: string;
   body: string;
@@ -306,6 +352,7 @@ export interface PreviewFeedback {
   deployment_url: string;
   body: string;
   review_round_id: string | null;
+  module_id: string | null;
   rating: number | null;
   category: FeedbackCategory | null;
   screenshot_url: string | null;

@@ -146,7 +146,7 @@ export function Facturen() {
                       {inv.number}
                     </td>
                     <td className="px-6 py-4 text-sm text-text-secondary">
-                      {inv.description || "—"}
+                      {inv.description || "-"}
                     </td>
                     <td className="px-6 py-4 text-sm font-medium text-text whitespace-nowrap">
                       {formatCents(inv.amount_cents)}
@@ -154,7 +154,7 @@ export function Facturen() {
                     <td className="px-6 py-4 text-sm text-text-secondary whitespace-nowrap">
                       {inv.due_date
                         ? new Date(inv.due_date).toLocaleDateString("nl-NL")
-                        : "—"}
+                        : "-"}
                     </td>
                     <td className="px-6 py-4">
                       <span

@@ -6,7 +6,7 @@ import type { DiscoveryBrief, WorkflowStepCategory } from "@/types/portal";
  * Standaard eerste stappen van een traject. De klant ziet deze meteen in
  * "Jouw traject" zodra een project uit de intake is aangemaakt.
  */
-const DEFAULT_STEPS: {
+export const DEFAULT_STEPS: {
   title: string;
   description: string;
   category: WorkflowStepCategory;
@@ -22,6 +22,25 @@ const DEFAULT_STEPS: {
 ];
 
 /**
+ * Zaait de standaardroute voor een project. Alleen bruikbaar door een admin
+ * (RLS). Bestaat los zodat de admin dit ook achteraf kan doen bij projecten
+ * die zonder route zijn aangemaakt.
+ */
+export async function seedDefaultSteps(projectId: string, clientId: string) {
+  const steps = DEFAULT_STEPS.map((s, i) => ({
+    project_id: projectId,
+    client_id: clientId,
+    title: s.title,
+    description: s.description,
+    category: s.category,
+    sequence_order: i,
+    owner: s.owner,
+    status: i === 0 ? "in_progress" : "pending",
+  }));
+  await supabase.from("workflow_steps").insert(steps);
+}
+
+/**
  * Maakt een project aan vanuit een intake-brief, koppelt de brief, en zaait
  * de eerste workflow-stappen. Alleen bruikbaar door een admin (RLS).
  * Geeft het nieuwe project-id terug.
@@ -33,7 +52,7 @@ export async function createProjectFromBrief(
     .from("projects")
     .insert({
       client_id: brief.client_id,
-      title: `${brief.business_name} — Portaal`,
+      title: `${brief.business_name} · Portaal`,
       description: brief.ai_summary?.slice(0, 500) ?? brief.business_description ?? null,
       phase: "build",
       brief_id: brief.id,
@@ -47,17 +66,7 @@ export async function createProjectFromBrief(
     return null;
   }
 
-  const steps = DEFAULT_STEPS.map((s, i) => ({
-    project_id: project.id,
-    client_id: brief.client_id,
-    title: s.title,
-    description: s.description,
-    category: s.category,
-    sequence_order: i,
-    owner: s.owner,
-    status: i === 0 ? "in_progress" : "pending",
-  }));
-  await supabase.from("workflow_steps").insert(steps);
+  await seedDefaultSteps(project.id, brief.client_id);
 
   await supabase.from("discovery_briefs").update({ status: "reviewed" }).eq("id", brief.id);
 
@@ -65,7 +74,7 @@ export async function createProjectFromBrief(
     type: "project_created",
     title: "Jullie traject is gestart",
     body: "We hebben jullie project aangemaakt. Bekijk de eerste stappen in Jouw traject.",
-    link: "/portal/overzicht",
+    link: "/portal/project",
   });
 
   return project.id;

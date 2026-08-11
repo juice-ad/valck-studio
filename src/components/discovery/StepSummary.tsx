@@ -45,7 +45,7 @@ export function StepSummary({ data, selectedFeatures }: Props) {
         {/* Bedrijf */}
         <SummaryBlock label="Jouw bedrijf">
           <p className="text-sm font-medium text-text mb-1">
-            {data.business_name || "—"}
+            {data.business_name || "-"}
           </p>
           {data.business_description && (
             <p className="text-sm text-text-secondary mb-1">
@@ -136,7 +136,7 @@ export function StepSummary({ data, selectedFeatures }: Props) {
             Extra opmerkingen (optioneel)
           </label>
           <p className="text-xs text-text-muted mb-2">
-            Dit veld wordt niet automatisch opgeslagen — vul het in en klik op "Intake versturen".
+            Dit veld wordt niet automatisch opgeslagen. Vul het in en klik op "Intake versturen".
           </p>
         </div>
       </div>

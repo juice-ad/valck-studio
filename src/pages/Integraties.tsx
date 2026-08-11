@@ -161,7 +161,7 @@ export function Integraties() {
                   </h2>
                   <p className="text-text-secondary leading-[1.7] mb-6 max-w-[640px]">
                     Heb je een koppeling nodig die hier niet bij staat? Geen
-                    probleem. We bouwen elke integratie op maat — van CRM tot
+                    probleem. We bouwen elke integratie op maat, van CRM tot
                     ERP, van e-commerce tot custom API's. Bespreek je wensen
                     tijdens de discovery fase.
                   </p>

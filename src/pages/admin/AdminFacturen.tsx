@@ -429,7 +429,7 @@ export function AdminFacturen() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <p className="text-xs text-text-muted">Organisatie</p>
-                  <p className="text-sm text-text">{editInvoice.clients?.company_name ?? "—"}</p>
+                  <p className="text-sm text-text">{editInvoice.clients?.company_name ?? "-"}</p>
                 </div>
                 <div>
                   <p className="text-xs text-text-muted">Bedrag</p>

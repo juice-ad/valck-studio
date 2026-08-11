@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import { ClientProvider } from "@/contexts/ClientContext";
 import { PortalSidebar } from "@/components/portal/PortalSidebar";
 import { PortalHeader } from "@/components/portal/PortalHeader";
+import { NotificationBell } from "@/components/portal/NotificationBell";
 
 export function PortalLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -31,6 +32,10 @@ export function PortalLayout() {
         {/* Main content */}
         <div className="flex-1 flex flex-col overflow-auto">
           <PortalHeader onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
+          {/* Desktop top bar met notificatie-bel */}
+          <div className="hidden md:flex items-center justify-end h-14 px-8 border-b border-border-light bg-bg-white">
+            <NotificationBell />
+          </div>
           <main className="flex-1 p-6 md:p-8">
             <Outlet />
           </main>

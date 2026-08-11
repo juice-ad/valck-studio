@@ -41,7 +41,7 @@ export function Discovery() {
   // Submitted/reviewed brief (read-only view)
   const [submittedBrief, setSubmittedBrief] = useState<DiscoveryBrief | null>(null);
 
-  // Form data — single object for all fields
+  // Form data - single object for all fields
   const [formData, setFormData] = useState<Partial<DiscoveryBrief>>({
     business_name: "",
     questionnaire_version: 2,
@@ -92,7 +92,7 @@ export function Discovery() {
         const brief = data as DiscoveryBrief;
         setBriefId(brief.id);
         setFormData(brief);
-        setSelectedFeatures(brief.selected_features ?? []);
+        setSelectedFeatures(Array.isArray(brief.selected_features) ? brief.selected_features : []);
         setAdditionalNotes(brief.additional_notes ?? "");
         // Resume at saved step
         setStep(brief.current_step ?? 0);
@@ -271,7 +271,7 @@ export function Discovery() {
       .eq("id", briefId);
 
     setSaving(false);
-    navigate("/portal/overzicht");
+    navigate("/portal/project");
   }
 
   // Validation per step

@@ -265,7 +265,7 @@ export function DataTable<TData, TValue>({
           {table.getPageCount() > 1 && (
             <>
               {" "}
-              — pagina {table.getState().pagination.pageIndex + 1} van{" "}
+              · pagina {table.getState().pagination.pageIndex + 1} van{" "}
               {table.getPageCount()}
             </>
           )}
