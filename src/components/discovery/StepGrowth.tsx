@@ -1,13 +1,19 @@
 import type { DiscoveryBrief } from "@/types/portal";
+import { detectActiveBranches, getBranchQuestionsForStep } from "@/lib/intake-branches";
+import { BranchQuestions } from "@/components/discovery/BranchQuestions";
 
 const sharedPlatformOptions = ["Ja, absoluut", "Misschien", "Nee, niet nodig", "Weet ik niet"];
 
 interface Props {
   data: Partial<DiscoveryBrief>;
   onChange: (field: string, value: string) => void;
+  branchResponses?: Record<string, string>;
+  onBranchChange?: (id: string, value: string) => void;
 }
 
-export function StepGrowth({ data, onChange }: Props) {
+export function StepGrowth({ data, onChange, branchResponses = {}, onBranchChange }: Props) {
+  const activeBranches = detectActiveBranches(data as Record<string, string | null | undefined>);
+  const stepBranches = getBranchQuestionsForStep(activeBranches, 4);
   return (
     <div>
       <h2 className="text-lg font-semibold text-text mb-2">Groei</h2>
@@ -63,6 +69,15 @@ export function StepGrowth({ data, onChange }: Props) {
             ))}
           </div>
         </div>
+
+        {/* Conditional branch questions */}
+        {stepBranches.length > 0 && onBranchChange && (
+          <BranchQuestions
+            branches={stepBranches}
+            responses={branchResponses}
+            onChange={onBranchChange}
+          />
+        )}
       </div>
     </div>
   );

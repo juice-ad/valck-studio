@@ -11,6 +11,8 @@ import {
   TrendingUp,
   CreditCard,
   Clock,
+  LifeBuoy,
+  Hammer,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { AdminStatCard } from "@/components/admin/AdminStatCard";
@@ -56,6 +58,9 @@ export function AdminDashboard() {
   const [messageCount, setMessageCount] = useState(0);
   const [revenueThisMonth, setRevenueThisMonth] = useState(0);
   const [openInvoiceCount, setOpenInvoiceCount] = useState(0);
+  const [openTicketCount, setOpenTicketCount] = useState(0);
+  const [pendingBuildCount, setPendingBuildCount] = useState(0);
+  const [mrr, setMrr] = useState(0);
   const [recentBriefs, setRecentBriefs] = useState<RecentBrief[]>([]);
   const [recentFeedback, setRecentFeedback] = useState<RecentFeedback[]>([]);
   const [recentPayments, setRecentPayments] = useState<RecentPayment[]>([]);
@@ -75,6 +80,9 @@ export function AdminDashboard() {
         briefList,
         feedbackList,
         paymentList,
+        ticketsRes,
+        buildReqsRes,
+        subsRes,
       ] = await Promise.all([
         supabase
           .from("projects")
@@ -124,6 +132,21 @@ export function AdminDashboard() {
           .not("paid_at", "is", null)
           .order("paid_at", { ascending: false })
           .limit(5),
+        // Open tickets
+        supabase
+          .from("tickets")
+          .select("id", { count: "exact", head: true })
+          .in("status", ["open", "in_behandeling"]),
+        // Pending build requests
+        supabase
+          .from("build_requests")
+          .select("id", { count: "exact", head: true })
+          .in("status", ["ingediend", "in_scoping"]),
+        // MRR from active subscriptions
+        supabase
+          .from("subscriptions")
+          .select("tier:subscription_tiers(price_cents)")
+          .is("end_date", null),
       ]);
 
       setProjectCount(projects.count ?? 0);
@@ -142,6 +165,18 @@ export function AdminDashboard() {
       setRecentBriefs((briefList.data as unknown as RecentBrief[]) ?? []);
       setRecentFeedback((feedbackList.data as unknown as RecentFeedback[]) ?? []);
       setRecentPayments((paymentList.data as unknown as RecentPayment[]) ?? []);
+      setOpenTicketCount(ticketsRes.count ?? 0);
+      setPendingBuildCount(buildReqsRes.count ?? 0);
+
+      // Calculate MRR — Supabase returns joined relation as array
+      const mrrTotal = (subsRes.data ?? []).reduce(
+        (sum: number, s: { tier: { price_cents: number }[] }) => {
+          const tierData = Array.isArray(s.tier) ? s.tier[0] : s.tier;
+          return sum + ((tierData as { price_cents: number } | undefined)?.price_cents ?? 0);
+        },
+        0
+      );
+      setMrr(mrrTotal);
     }
 
     load();
@@ -168,7 +203,16 @@ export function AdminDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <AdminStatCard label="Open reviews" value={reviewCount} icon={Eye} to="/admin/projecten" />
         <AdminStatCard label="Klantberichten" value={messageCount} icon={MessageCircle} to="/admin/berichten" />
+        <AdminStatCard label="Open tickets" value={openTicketCount} icon={LifeBuoy} to="/admin/tickets" />
+        <AdminStatCard label="Build requests" value={pendingBuildCount} icon={Hammer} to="/admin/build-requests" />
       </div>
+
+      {/* MRR */}
+      {mrr > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <AdminStatCard label="MRR" value={formatCents(mrr)} icon={CreditCard} to="/admin/subscriptions" />
+        </div>
+      )}
 
       {/* Quick actions */}
       <div className="flex flex-wrap gap-3 mb-8">

@@ -68,6 +68,46 @@ export interface ProjectUpdate {
   project_id: string;
   title: string;
   body: string | null;
+  kind: "update" | "drop";
+  link: string | null;
+  created_at: string;
+}
+
+export type ModuleStatus = "planned" | "building" | "live" | "on_hold";
+export type ModuleKind = "system" | "agent";
+
+export interface Module {
+  id: string;
+  project_id: string;
+  client_id: string;
+  name: string;
+  description: string | null;
+  status: ModuleStatus;
+  kind: ModuleKind;
+  monthly_price_cents: number | null;
+  sequence_order: number;
+  preview_url: string | null;
+  icon: string | null;
+  created_at: string;
+}
+
+export interface AgentActivity {
+  id: string;
+  module_id: string;
+  client_id: string;
+  occurred_on: string;
+  summary: string;
+  created_at: string;
+}
+
+export interface ProjectCost {
+  id: string;
+  project_id: string;
+  client_id: string;
+  description: string;
+  amount_cents: number;
+  is_overrun: boolean;
+  sequence_order: number;
   created_at: string;
 }
 
@@ -261,11 +301,16 @@ export interface DiscoveryBrief {
   inspiration_urls: string[] | null;
   brand_colors: string | null;
   brand_notes: string | null;
+  // Design preview
+  accent_color: string | null;
+  logo_url: string | null;
   // Extra
   additional_notes: string | null;
   // AI Summary
   ai_summary: string | null;
   ai_summary_generated_at: string | null;
+  // Branch responses
+  branch_responses: Record<string, string> | null;
   // Meta
   questionnaire_version: number;
   current_step: number;
@@ -321,6 +366,7 @@ export interface PreviewFeedback {
   deployment_url: string;
   body: string;
   review_round_id: string | null;
+  module_id: string | null;
   rating: number | null;
   category: FeedbackCategory | null;
   screenshot_url: string | null;

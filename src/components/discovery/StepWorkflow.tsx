@@ -1,4 +1,6 @@
 import type { DiscoveryBrief } from "@/types/portal";
+import { detectActiveBranches, getBranchQuestionsForStep } from "@/lib/intake-branches";
+import { BranchQuestions } from "@/components/discovery/BranchQuestions";
 
 const adminHoursOptions = ["< 2 uur", "2-5 uur", "5-10 uur", "10-20 uur", "20+ uur"];
 const monthlyToolCostsOptions = ["< €50", "€50 - €200", "€200 - €500", "€500+", "Geen idee"];
@@ -6,9 +8,13 @@ const monthlyToolCostsOptions = ["< €50", "€50 - €200", "€200 - €500",
 interface Props {
   data: Partial<DiscoveryBrief>;
   onChange: (field: string, value: string) => void;
+  branchResponses?: Record<string, string>;
+  onBranchChange?: (id: string, value: string) => void;
 }
 
-export function StepWorkflow({ data, onChange }: Props) {
+export function StepWorkflow({ data, onChange, branchResponses = {}, onBranchChange }: Props) {
+  const activeBranches = detectActiveBranches(data as Record<string, string | null | undefined>);
+  const stepBranches = getBranchQuestionsForStep(activeBranches, 2);
   return (
     <div>
       <h2 className="text-lg font-semibold text-text mb-2">Werkwijze & tools</h2>
@@ -99,6 +105,15 @@ export function StepWorkflow({ data, onChange }: Props) {
             className="w-full rounded-[8px] border border-border-light bg-bg px-3 py-2.5 text-sm text-text placeholder:text-text-muted outline-none focus:border-text transition-colors resize-none"
           />
         </div>
+
+        {/* Conditional branch questions */}
+        {stepBranches.length > 0 && onBranchChange && (
+          <BranchQuestions
+            branches={stepBranches}
+            responses={branchResponses}
+            onChange={onBranchChange}
+          />
+        )}
       </div>
     </div>
   );

@@ -14,6 +14,8 @@ import { OrgPicker } from "@/pages/portal/OrgPicker";
 import { Dashboard } from "@/pages/portal/Dashboard";
 import { Projecten } from "@/pages/portal/Projecten";
 import { ProjectDetail } from "@/pages/portal/ProjectDetail";
+import { ModuleDetail } from "@/pages/portal/ModuleDetail";
+import { ProjectRedirect } from "@/pages/portal/ProjectRedirect";
 import { ReviewDetail } from "@/pages/portal/ReviewDetail";
 import { Berichten } from "@/pages/portal/Berichten";
 import { Documenten } from "@/pages/portal/Documenten";
@@ -93,10 +95,12 @@ function App() {
       <Route element={<PortalLayout />}>
         <Route element={<ProtectedRoute allowedRoles={["client"]} />}>
           <Route path="/portal/select-org" element={<OrgPicker />} />
+          <Route path="/portal/project" element={<ProjectRedirect />} />
           <Route path="/portal/dashboard" element={<Dashboard />} />
           <Route path="/portal/discovery" element={<Discovery />} />
           <Route path="/portal/projecten" element={<Projecten />} />
           <Route path="/portal/projecten/:id" element={<ProjectDetail />} />
+          <Route path="/portal/projecten/:id/modules/:moduleId" element={<ModuleDetail />} />
           <Route
             path="/portal/projecten/:id/review/:reviewId"
             element={<ReviewDetail />}

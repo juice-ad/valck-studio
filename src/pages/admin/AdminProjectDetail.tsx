@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { AdminModal } from "@/components/admin/AdminModal";
+import { AdminProjectProducts } from "@/components/admin/AdminProjectProducts";
 import type { Project, ProjectPhase, ReviewRound, PreviewFeedback, ProjectUpdate } from "@/types/portal";
 
 const phases: { key: ProjectPhase; label: string }[] = [
@@ -245,6 +246,8 @@ export function AdminProjectDetail() {
           ))}
         </div>
       </div>
+
+      <AdminProjectProducts projectId={project.id} clientId={project.client_id} />
 
       {/* Review rounds */}
       <div className="rounded-[12px] bg-bg-white border border-border-light p-6 mb-6">

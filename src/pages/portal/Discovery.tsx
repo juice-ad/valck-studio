@@ -14,7 +14,6 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useActiveClient } from "@/contexts/ClientContext";
 import type { DiscoveryBrief } from "@/types/portal";
-import { detectActiveBranches } from "@/lib/intake-branches";
 import { StepIndicator } from "@/components/discovery/StepIndicator";
 import { StepWelcome } from "@/components/discovery/StepWelcome";
 import { StepBusiness } from "@/components/discovery/StepBusiness";
@@ -58,8 +57,10 @@ export function Discovery() {
   // Branch responses for conditional questions
   const [branchResponses, setBranchResponses] = useState<Record<string, string>>({});
 
-  // Detect active branches based on current form data (passed to step components)
-  void detectActiveBranches;
+  function handleBranchChange(id: string, value: string) {
+    setBranchResponses((prev) => ({ ...prev, [id]: value }));
+    scheduleSave();
+  }
 
   // Debounce timer ref
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -151,6 +152,8 @@ export function Discovery() {
       inspiration_urls: urls.length > 0 ? urls : null,
       brand_colors: formData.brand_colors?.trim() || null,
       brand_notes: formData.brand_notes?.trim() || null,
+      accent_color: formData.accent_color?.trim() || null,
+      logo_url: formData.logo_url?.trim() || null,
       additional_notes: additionalNotes.trim() || null,
       branch_responses: branchResponses,
       questionnaire_version: 2,
@@ -411,13 +414,23 @@ export function Discovery() {
               <StepBusiness data={formData} onChange={handleChange} />
             )}
             {step === 2 && (
-              <StepWorkflow data={formData} onChange={handleChange} />
+              <StepWorkflow
+                data={formData}
+                onChange={handleChange}
+                branchResponses={branchResponses}
+                onBranchChange={handleBranchChange}
+              />
             )}
             {step === 3 && (
               <StepPainPoints data={formData} onChange={handleChange} />
             )}
             {step === 4 && (
-              <StepGrowth data={formData} onChange={handleChange} />
+              <StepGrowth
+                data={formData}
+                onChange={handleChange}
+                branchResponses={branchResponses}
+                onBranchChange={handleBranchChange}
+              />
             )}
             {step === 5 && (
               <StepPriorities data={formData} onChange={handleChange} />
@@ -435,6 +448,7 @@ export function Discovery() {
                 <StepSummary
                   data={formData}
                   selectedFeatures={selectedFeatures}
+                  branchResponses={branchResponses}
                 />
 
                 {/* Additional notes textarea */}

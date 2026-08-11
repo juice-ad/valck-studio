@@ -1,15 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard,
   FolderKanban,
   MessageCircle,
   FileText,
   Receipt,
-  Sparkles,
-  LifeBuoy,
-  Hammer,
-  Globe,
   LogOut,
   Settings,
   ChevronsUpDown,
@@ -28,15 +23,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const navItems = [
-  { label: "Dashboard", to: "/portal/dashboard", icon: LayoutDashboard },
-  { label: "Intake", to: "/portal/discovery", icon: Sparkles },
-  { label: "Projecten", to: "/portal/projecten", icon: FolderKanban, hasNotification: true },
+  { label: "Project", to: "/portal/project", icon: FolderKanban, hasNotification: true },
   { label: "Berichten", to: "/portal/berichten", icon: MessageCircle },
   { label: "Documenten", to: "/portal/documenten", icon: FileText },
   { label: "Facturen", to: "/portal/facturen", icon: Receipt },
-  { label: "Tickets", to: "/portal/tickets", icon: LifeBuoy },
-  { label: "Build Requests", to: "/portal/build-requests", icon: Hammer },
-  { label: "Mijn Platform", to: "/portal/mijn-platform", icon: Globe },
 ];
 
 interface Props {
@@ -91,14 +81,16 @@ export function PortalSidebar({ onClose }: Props) {
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 flex flex-col gap-1">
         {navItems.map((item) => {
-          const active = pathname.startsWith(item.to);
+          const active = item.to === "/portal/project"
+            ? pathname.startsWith("/portal/project") || pathname.startsWith("/portal/discovery")
+            : pathname.startsWith(item.to);
           const showDot = item.hasNotification && hasOpenReviews;
           return (
             <Link
               key={item.to}
               to={item.to}
               onClick={onClose}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-[8px] text-sm no-underline transition-colors ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-[8px] text-sm no-underline transition-colors focus-visible:ring-2 focus-visible:ring-text/30 ${
                 active
                   ? "bg-accent-soft font-semibold text-text"
                   : "text-text-secondary hover:text-text hover:bg-accent-soft/50"
@@ -107,7 +99,7 @@ export function PortalSidebar({ onClose }: Props) {
               <item.icon size={18} />
               {item.label}
               {showDot && (
-                <span className="w-2 h-2 rounded-full bg-blue ml-auto animate-pulse-dot" />
+                <span className="w-2 h-2 rounded-full bg-blue ml-auto animate-pulse-dot" aria-label="Actie vereist" />
               )}
             </Link>
           );

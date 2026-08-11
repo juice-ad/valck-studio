@@ -1,9 +1,11 @@
 import { featureCategories } from "@/lib/discovery-features";
+import { branches } from "@/lib/intake-branches";
 import type { DiscoveryBrief } from "@/types/portal";
 
 interface Props {
   data: Partial<DiscoveryBrief>;
   selectedFeatures: string[];
+  branchResponses?: Record<string, string>;
 }
 
 function SummaryBlock({
@@ -33,7 +35,17 @@ function Field({ label, value }: { label: string; value: string | null | undefin
   );
 }
 
-export function StepSummary({ data, selectedFeatures }: Props) {
+export function StepSummary({ data, selectedFeatures, branchResponses = {} }: Props) {
+  // Group branch responses by branch type
+  const groupedBranches = branches
+    .map((branch) => {
+      const answers = branch.questions
+        .filter((q) => branchResponses[q.id]?.trim())
+        .map((q) => ({ label: q.label, value: branchResponses[q.id] }));
+      return { ...branch, answers };
+    })
+    .filter((b) => b.answers.length > 0);
+
   return (
     <div>
       <h2 className="text-lg font-semibold text-text mb-2">Samenvatting</h2>
@@ -88,6 +100,22 @@ export function StepSummary({ data, selectedFeatures }: Props) {
           </SummaryBlock>
         )}
 
+        {/* Branch responses */}
+        {groupedBranches.length > 0 && (
+          <SummaryBlock label="Aanvullende informatie">
+            {groupedBranches.map((branch) => (
+              <div key={branch.type} className="mb-3 last:mb-0">
+                <p className="text-xs font-semibold text-text mb-1">
+                  {branch.label}
+                </p>
+                {branch.answers.map((a) => (
+                  <Field key={a.label} label={a.label} value={a.value} />
+                ))}
+              </div>
+            ))}
+          </SummaryBlock>
+        )}
+
         {/* Prioriteiten */}
         <SummaryBlock label="Prioriteiten">
           <Field label="#1 prioriteit" value={data.automation_priority} />
@@ -97,8 +125,20 @@ export function StepSummary({ data, selectedFeatures }: Props) {
         </SummaryBlock>
 
         {/* Inspiratie */}
-        {(selectedFeatures.length > 0 || data.brand_colors || data.brand_notes || (data.inspiration_urls && data.inspiration_urls.length > 0)) && (
+        {(selectedFeatures.length > 0 || data.brand_colors || data.brand_notes || data.accent_color || (data.inspiration_urls && data.inspiration_urls.length > 0)) && (
           <SummaryBlock label="Inspiratie & ideeën">
+            {data.accent_color && (
+              <div className="mb-2 flex items-center gap-2">
+                <span className="text-xs text-text-muted">Accentkleur:</span>
+                <div
+                  className="w-4 h-4 rounded-full border border-border-light"
+                  style={{ backgroundColor: data.accent_color }}
+                />
+                <span className="text-xs font-mono text-text">
+                  {data.accent_color}
+                </span>
+              </div>
+            )}
             {selectedFeatures.length > 0 && (
               <div className="mb-2">
                 <span className="text-xs text-text-muted">Features: </span>

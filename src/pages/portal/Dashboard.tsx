@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { FolderKanban, MessageCircle, Receipt, Eye } from "lucide-react";
+import { FolderKanban, MessageCircle, Receipt, Eye, LifeBuoy, Hammer } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useActiveClient } from "@/contexts/ClientContext";
@@ -17,6 +17,8 @@ export function Dashboard() {
   const [messageCount, setMessageCount] = useState(0);
   const [invoiceCount, setInvoiceCount] = useState(0);
   const [openReviewCount, setOpenReviewCount] = useState(0);
+  const [openTicketCount, setOpenTicketCount] = useState(0);
+  const [activeBuildRequestCount, setActiveBuildRequestCount] = useState(0);
   const [recentUpdates, setRecentUpdates] = useState<ProjectUpdate[]>([]);
   const [recentMessages, setRecentMessages] = useState<Message[]>([]);
   const [openReviews, setOpenReviews] = useState<ReviewWithProject[]>([]);
@@ -25,7 +27,7 @@ export function Dashboard() {
     if (!user || !activeClientId) return;
 
     async function load() {
-      const [projects, messages, invoices, updates, msgs, reviews] =
+      const [projects, messages, invoices, updates, msgs, reviews, tickets, buildReqs] =
         await Promise.all([
           supabase
             .from("projects")
@@ -58,6 +60,16 @@ export function Dashboard() {
             .eq("projects.client_id", activeClientId!)
             .in("status", ["pending", "active"])
             .order("created_at", { ascending: false }),
+          supabase
+            .from("tickets")
+            .select("id", { count: "exact", head: true })
+            .eq("client_id", activeClientId!)
+            .in("status", ["open", "in_behandeling"]),
+          supabase
+            .from("build_requests")
+            .select("id", { count: "exact", head: true })
+            .eq("client_id", activeClientId!)
+            .not("status", "in", '("afgewezen","opgeleverd")'),
         ]);
 
       setProjectCount(projects.count ?? 0);
@@ -69,6 +81,8 @@ export function Dashboard() {
       const reviewData = (reviews.data ?? []) as ReviewWithProject[];
       setOpenReviews(reviewData);
       setOpenReviewCount(reviewData.length);
+      setOpenTicketCount(tickets.count ?? 0);
+      setActiveBuildRequestCount(buildReqs.count ?? 0);
     }
 
     load();
@@ -98,6 +112,18 @@ export function Dashboard() {
       value: invoiceCount,
       icon: Receipt,
       to: "/portal/facturen",
+    },
+    {
+      label: "Open tickets",
+      value: openTicketCount,
+      icon: LifeBuoy,
+      to: "/portal/tickets",
+    },
+    {
+      label: "Build requests",
+      value: activeBuildRequestCount,
+      icon: Hammer,
+      to: "/portal/build-requests",
     },
   ];
 

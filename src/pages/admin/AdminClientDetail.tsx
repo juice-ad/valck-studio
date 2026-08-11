@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Copy, Check, UserPlus } from "lucide-react";
+import { ArrowLeft, Copy, Check, UserPlus, CreditCard, Globe, Plus } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
-import type { Client, Project, Invoice } from "@/types/portal";
+import type { Client, Project, Invoice, SubscriptionTier, Subscription, Platform, PlatformStatus } from "@/types/portal";
+import { Button } from "@/components/ui/button";
 
 interface ProfileRow {
   id: string;
@@ -29,11 +31,19 @@ export function AdminClientDetail() {
   const [editForm, setEditForm] = useState({ company_name: "", contact_person: "", email: "", phone: "", notes: "" });
   const [saving, setSaving] = useState(false);
 
+  // Subscription & Platform state
+  const [tiers, setTiers] = useState<SubscriptionTier[]>([]);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [platforms, setPlatforms] = useState<Platform[]>([]);
+  const [showTierPicker, setShowTierPicker] = useState(false);
+  const [showPlatformForm, setShowPlatformForm] = useState(false);
+  const [platformForm, setPlatformForm] = useState({ name: "", live_url: "", accent_color: "#111111", modules: "" });
+
   useEffect(() => {
     if (!id) return;
 
     async function load() {
-      const [clientRes, usersRes, projectsRes, invoicesRes] = await Promise.all([
+      const [clientRes, usersRes, projectsRes, invoicesRes, tiersRes, subRes, platformsRes] = await Promise.all([
         supabase.from("clients").select("*").eq("id", id).single(),
         supabase
           .from("user_client_memberships")
@@ -41,6 +51,9 @@ export function AdminClientDetail() {
           .eq("client_id", id),
         supabase.from("projects").select("*").eq("client_id", id).order("created_at", { ascending: false }),
         supabase.from("invoices").select("*").eq("client_id", id).order("created_at", { ascending: false }).limit(10),
+        supabase.from("subscription_tiers").select("*").eq("is_active", true).order("sort_order"),
+        supabase.from("subscriptions").select("*, tier:subscription_tiers(*)").eq("client_id", id).is("end_date", null).maybeSingle(),
+        supabase.from("platforms").select("*").eq("client_id", id).order("created_at", { ascending: false }),
       ]);
 
       const c = clientRes.data as Client | null;
@@ -61,6 +74,9 @@ export function AdminClientDetail() {
       setUsers(parsed);
       setProjects((projectsRes.data as Project[]) ?? []);
       setInvoices((invoicesRes.data as Invoice[]) ?? []);
+      setTiers((tiersRes.data as SubscriptionTier[]) ?? []);
+      setSubscription(subRes.data as Subscription | null);
+      setPlatforms((platformsRes.data as Platform[]) ?? []);
       setLoading(false);
     }
 
@@ -106,6 +122,68 @@ export function AdminClientDetail() {
     navigator.clipboard.writeText(inviteUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  async function assignTier(tierId: string) {
+    if (!id) return;
+
+    // End existing subscription
+    if (subscription) {
+      await supabase
+        .from("subscriptions")
+        .update({ end_date: new Date().toISOString() })
+        .eq("id", subscription.id);
+    }
+
+    // Create new subscription
+    const { data, error } = await supabase
+      .from("subscriptions")
+      .insert({
+        client_id: id,
+        tier_id: tierId,
+        start_date: new Date().toISOString(),
+      })
+      .select("*, tier:subscription_tiers(*)")
+      .single();
+
+    if (error) {
+      toast.error("Fout bij toewijzen abonnement");
+    } else {
+      setSubscription(data as Subscription);
+      setShowTierPicker(false);
+      toast.success("Abonnement toegewezen");
+    }
+  }
+
+  async function createPlatform() {
+    if (!id || !platformForm.name.trim()) return;
+
+    const modules = platformForm.modules
+      .split(",")
+      .map((m) => m.trim())
+      .filter(Boolean);
+
+    const { data, error } = await supabase
+      .from("platforms")
+      .insert({
+        client_id: id,
+        name: platformForm.name.trim(),
+        live_url: platformForm.live_url.trim() || null,
+        accent_color: platformForm.accent_color || "#111111",
+        modules,
+        status: "development" as PlatformStatus,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      toast.error("Fout bij aanmaken platform");
+    } else {
+      setPlatforms([data as Platform, ...platforms]);
+      setPlatformForm({ name: "", live_url: "", accent_color: "#111111", modules: "" });
+      setShowPlatformForm(false);
+      toast.success("Platform aangemaakt");
+    }
   }
 
   if (loading) {

@@ -25,7 +25,7 @@ export function ProtectedRoute({ allowedRoles }: Props) {
     if (profile.role === "admin") {
       return <Navigate to="/admin" replace />;
     }
-    return <Navigate to="/portal/dashboard" replace />;
+    return <Navigate to="/portal/project" replace />;
   }
 
   return <Outlet />;

@@ -4,6 +4,8 @@ import { ArrowLeft, CheckCircle2, Sparkles, RefreshCw } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { DiscoveryBrief } from "@/types/portal";
 import { featureCategories } from "@/lib/discovery-features";
+import { branches } from "@/lib/intake-branches";
+import { DesignPreview } from "@/components/discovery/DesignPreview";
 
 export function AdminBriefDetail() {
   const { id } = useParams<{ id: string }>();
@@ -222,7 +224,59 @@ export function AdminBriefDetail() {
         <Field label="Inspiratie URLs" value={brief.inspiration_urls?.join(", ")} />
         <Field label="Merkkleuren" value={brief.brand_colors} />
         <Field label="Stijlnotities" value={brief.brand_notes} />
+        {brief.accent_color && (
+          <div>
+            <p className="text-xs text-text-muted">Accentkleur</p>
+            <div className="flex items-center gap-2 mt-0.5">
+              <div
+                className="w-5 h-5 rounded-full border border-border-light"
+                style={{ backgroundColor: brief.accent_color }}
+              />
+              <span className="text-sm font-mono text-text">{brief.accent_color}</span>
+            </div>
+          </div>
+        )}
       </Section>
+
+      {/* Design Preview */}
+      {(brief.accent_color || brief.logo_url) && (
+        <div className="rounded-[12px] bg-bg-white border border-border-light p-6 mb-4">
+          <h2 className="text-sm font-semibold text-text mb-4">Design preview</h2>
+          <DesignPreview
+            accentColor={brief.accent_color || "#111111"}
+            logoUrl={brief.logo_url}
+          />
+        </div>
+      )}
+
+      {/* Branch responses */}
+      {brief.branch_responses && Object.keys(brief.branch_responses).length > 0 && (
+        <div className="rounded-[12px] bg-bg-white border border-border-light p-6 mb-4">
+          <h2 className="text-sm font-semibold text-text mb-4">Branche-specifieke antwoorden</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {branches
+              .map((branch) => {
+                const answers = branch.questions
+                  .filter((q) => brief.branch_responses?.[q.id]?.trim())
+                  .map((q) => ({ label: q.label, value: brief.branch_responses![q.id] }));
+                return { ...branch, answers };
+              })
+              .filter((b) => b.answers.length > 0)
+              .map((branch) => (
+                <div key={branch.type} className="col-span-full">
+                  <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">
+                    {branch.label}
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                    {branch.answers.map((a) => (
+                      <Field key={a.label} label={a.label} value={a.value} />
+                    ))}
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
 
       {brief.additional_notes && (
         <Section title="Extra notities">

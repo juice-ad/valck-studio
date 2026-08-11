@@ -63,6 +63,26 @@ export function AdminTicketDetail() {
     load();
   }, [id]);
 
+  async function notifyClient(type: "status_change" | "reply", newStatus?: string, replyPreview?: string) {
+    if (!ticket) return;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/notify-ticket-update`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({ ticketId: ticket.id, type, newStatus, replyPreview }),
+        }
+      );
+    } catch {
+      // Notification failure is non-blocking
+    }
+  }
+
   async function handleStatusChange(newStatus: TicketStatus) {
     if (!ticket) return;
 
@@ -76,6 +96,7 @@ export function AdminTicketDetail() {
     } else {
       setTicket({ ...ticket, status: newStatus });
       toast.success(`Status gewijzigd naar "${statusLabels[newStatus]}"`);
+      notifyClient("status_change", newStatus);
     }
   }
 
@@ -99,6 +120,7 @@ export function AdminTicketDetail() {
       toast.error("Fout bij versturen");
     } else {
       setMessages([...messages, data as TicketMessage]);
+      notifyClient("reply", undefined, reply.trim());
       setReply("");
     }
     setSending(false);
